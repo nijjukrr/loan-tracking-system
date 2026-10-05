@@ -84,7 +84,6 @@ export function ActiveAccountsPage({ onOpenNewLoan }: Props) {
                 <tr>
                   <th>Person Name</th>
                   <th>Mode</th>
-                  <th>Main Sheet No</th>
                   <th className="amount-cell">Principal</th>
                   <th>Start Date</th>
                   <th>Next Due</th>
@@ -111,7 +110,6 @@ export function ActiveAccountsPage({ onOpenNewLoan }: Props) {
                       <td>
                         <span className="source-badge">{loan.mode === 'D' ? 'Daily' : 'Weekly'}</span>
                       </td>
-                      <td>#{loan.main_sheet_no}</td>
                       <td className="amount-cell">{currency.format(loan.principal)}</td>
                       <td>{loan.loan_date}</td>
                       <td>

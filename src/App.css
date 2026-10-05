@@ -939,3 +939,16 @@ select:focus {
   color: #64748b;
   font-size: 0.8rem;
 }
+.danger-button {
+  min-height: 42px;
+  padding: 0.65rem 1rem;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff;
+  color: #b91c1c;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.danger-button:hover { background: #fef2f2; }

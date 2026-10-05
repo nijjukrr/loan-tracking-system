@@ -63,7 +63,6 @@ export function ClosedAccountsPage() {
                 <tr>
                   <th>Person Name</th>
                   <th>Mode</th>
-                  <th>Main Sheet No</th>
                   <th className="amount-cell">Principal</th>
                   <th>Start Date</th>
                   <th>Closed Date</th>
@@ -85,7 +84,6 @@ export function ClosedAccountsPage() {
                       <td>
                         <span className="source-badge">{loan.mode === 'D' ? 'Daily' : 'Weekly'}</span>
                       </td>
-                      <td>#{loan.main_sheet_no}</td>
                       <td className="amount-cell">{currency.format(loan.principal)}</td>
                       <td>{loan.loan_date}</td>
                       <td>{loan.closed_at?.slice(0, 10) || loan.loan_date}</td>

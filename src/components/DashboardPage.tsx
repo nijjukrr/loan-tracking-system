@@ -176,7 +176,6 @@ export function DashboardPage({ onOpenNewLoan }: Props) {
                   <tr>
                     <th>Person Name</th>
                     <th>Mode</th>
-                    <th>Main Sheet No</th>
                     <th>Loan Date</th>
                     <th className="amount-cell">Principal</th>
                     <th className="amount-cell">Collected</th>
@@ -194,7 +193,6 @@ export function DashboardPage({ onOpenNewLoan }: Props) {
                       <td>
                         <span className="source-badge">{loan.mode === 'D' ? 'Daily' : 'Weekly'}</span>
                       </td>
-                      <td>#{loan.main_sheet_no}</td>
                       <td>{loan.loan_date}</td>
                       <td className="amount-cell">{currency.format(loan.principal)}</td>
                       <td className="amount-cell">{currency.format(loan.total_collected)}</td>

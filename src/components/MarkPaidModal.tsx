@@ -89,7 +89,7 @@ export function MarkPaidModal({ isOpen, onClose, onSuccess, loan, installment }:
         <div className="payment-summary-card">
           <div>
             <strong>{loan.customer_name}</strong>
-            <span>Main Sheet #{loan.main_sheet_no} · {loan.mode === 'D' ? 'Daily Loan' : 'Weekly Loan'}</span>
+            <span>{loan.mode === 'D' ? 'Daily Loan' : 'Weekly Loan'}</span>
           </div>
           <div className="summary-pills">
             <span>Due Date: <strong>{currentDueDate}</strong></span>

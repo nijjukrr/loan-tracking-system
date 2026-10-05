@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { financeApi } from '../lib/financeApi'
 import { calculateNextDueDate } from '../lib/financeLogic'
 import type { Installment, Loan, Payment } from '../types'
@@ -9,6 +9,7 @@ const currency = new Intl.NumberFormat('en-IN', { style: 'currency', currency: '
 
 export function BorrowerDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const [loan, setLoan] = useState<Loan | null>(null)
   const [installments, setInstallments] = useState<Installment[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
@@ -41,12 +42,24 @@ export function BorrowerDetailPage() {
 
   async function handleCloseAccount() {
     if (!loan) return
-    if (!window.confirm(`Are you sure you want to close account for ${loan.customer_name} (Main Sheet #${loan.main_sheet_no})?`)) return
+    if (!window.confirm(`Close the account for ${loan.customer_name}? Its history will remain available.`)) return
     try {
       await financeApi.closeLoan(loan.id)
       loadData()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to close account.')
+    }
+  }
+
+  async function handleDeleteAccount() {
+    if (!loan) return
+    const confirmed = window.confirm(`Permanently delete ${loan.customer_name}'s ${loan.mode === 'D' ? 'Daily' : 'Weekly'} account, including its schedule and payment history? This cannot be undone.`)
+    if (!confirmed) return
+    try {
+      await financeApi.deleteLoan(loan.id)
+      navigate(loan.mode === 'D' ? '/daily' : '/weekly', { replace: true })
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Unable to delete account.')
     }
   }
 
@@ -92,9 +105,7 @@ export function BorrowerDetailPage() {
             </Link>
           </div>
           <h1>{loan.customer_name}</h1>
-          <p className="page-description">
-            Main Sheet #{loan.main_sheet_no} · {loan.mode === 'D' ? 'Daily Loan (10-Day Cycle)' : 'Weekly Loan (10 Weeks)'}
-          </p>
+          <p className="page-description">{loan.mode === 'D' ? 'Daily Loan (10-Day Cycle)' : 'Weekly Loan (10 Weeks)'}</p>
         </div>
         <div className="header-actions">
           {loan.status === 'active' && (
@@ -111,6 +122,9 @@ export function BorrowerDetailPage() {
             }}
           >
             + Add Payment / Mark Paid
+          </button>
+          <button type="button" className="danger-button" onClick={handleDeleteAccount}>
+            Delete Account
           </button>
         </div>
       </header>
@@ -156,10 +170,6 @@ export function BorrowerDetailPage() {
           <div>
             <span>Person Name</span>
             <strong>{loan.customer_name}</strong>
-          </div>
-          <div>
-            <span>Main Sheet No</span>
-            <strong>#{loan.main_sheet_no}</strong>
           </div>
           <div>
             <span>Loan Type</span>

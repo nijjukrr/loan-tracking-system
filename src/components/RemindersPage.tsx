@@ -89,7 +89,6 @@ export function RemindersPage() {
                     <tr>
                       <th>Person Name</th>
                       <th>Mode</th>
-                      <th>Main Sheet No</th>
                       <th className="amount-cell">Principal</th>
                       <th className="amount-cell">Amount Due</th>
                       <th>Due Date</th>
@@ -111,7 +110,6 @@ export function RemindersPage() {
                         <td>
                           <span className="source-badge">{inst.loan?.mode === 'D' ? 'Daily' : 'Weekly'}</span>
                         </td>
-                        <td>#{inst.loan?.main_sheet_no}</td>
                         <td className="amount-cell">{currency.format(inst.loan?.principal || 0)}</td>
                         <td className="amount-cell primary-cell">{currency.format(inst.expected_amount - inst.paid_amount)}</td>
                         <td>

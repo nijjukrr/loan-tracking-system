@@ -30,6 +30,7 @@ export interface FinanceApi {
   createLoan(input: NewLoanInput): Promise<Loan>
   recordPayment(input: NewPaymentInput): Promise<{ loan: Loan; payment: Payment; installments: Installment[] }>
   closeLoan(id: string): Promise<Loan>
+  deleteLoan(id: string): Promise<void>
   listPayments(filter?: { mode?: ModeKind; search?: string }): Promise<Payment[]>
   listInstallments(filter?: { status?: InstallmentStatus; due_date?: string }): Promise<Array<Installment & { loan?: Loan }>>
   getDashboardMetrics(): Promise<DashboardMetrics>
@@ -366,6 +367,16 @@ class LocalPreviewFinanceApi implements FinanceApi {
     return loan
   }
 
+  async deleteLoan(id: string) {
+    const store = getLocalStore()
+    if (!store.loans.some((loan) => loan.id === id)) throw new Error('Account not found.')
+    saveLocalStore({
+      loans: store.loans.filter((loan) => loan.id !== id),
+      installments: store.installments.filter((installment) => installment.loan_id !== id),
+      payments: store.payments.filter((payment) => payment.loan_id !== id),
+    })
+  }
+
   async listPayments(filter?: { mode?: ModeKind; search?: string }) {
     const { payments } = getLocalStore()
     return payments.filter((p) => {
@@ -549,6 +560,11 @@ class SupabaseFinanceApi implements FinanceApi {
     const { data, error } = await supabase!.from('loans').update({ status: 'closed', closed_at: new Date().toISOString() }).eq('id', id).select().single()
     if (error) throw error
     return data as Loan
+  }
+
+  async deleteLoan(id: string) {
+    const { error } = await supabase!.from('loans').delete().eq('id', id)
+    if (error) throw new Error(`Unable to delete account: ${error.message}`)
   }
 
   async listPayments(filter?: { mode?: ModeKind; search?: string }) {

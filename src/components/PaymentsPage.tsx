@@ -102,7 +102,6 @@ export function PaymentsPage() {
                   <th>Payment ID</th>
                   <th>Person Name</th>
                   <th>Mode</th>
-                  <th>Main Sheet No</th>
                   <th>Payment Date</th>
                   <th className="amount-cell">Amount</th>
                   <th>Payment Type</th>
@@ -123,7 +122,6 @@ export function PaymentsPage() {
                     <td>
                       <span className="source-badge">{pay.mode === 'D' ? 'Daily' : 'Weekly'}</span>
                     </td>
-                    <td>#{pay.main_sheet_no}</td>
                     <td>{pay.payment_date}</td>
                     <td className="amount-cell primary-cell">{currency.format(pay.amount)}</td>
                     <td>
