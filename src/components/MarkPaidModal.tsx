@@ -64,7 +64,8 @@ export function MarkPaidModal({ isOpen, onClose, onSuccess, loan, installment }:
       onSuccess()
       onClose()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Unable to record payment.')
+      const safeMessage = err instanceof Error ? err.message : 'An unexpected error occurred.'
+      setError(`Unable to save payment: ${safeMessage}`)
     } finally {
       setSaving(false)
     }
