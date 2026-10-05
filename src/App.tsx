@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './components/AppLayout'
-import { AuthPanel } from './components/AuthPanel'
+import { SecureAccessGate } from './components/AuthPanel'
 import { DashboardPage } from './components/DashboardPage'
 import { DailyPage } from './components/DailyPage'
 import { WeeklyPage } from './components/WeeklyPage'
@@ -36,7 +36,7 @@ function App() {
   }, [])
 
   if (checkingSession) return <div className="loading-screen">Loading finance tracker…</div>
-  if (isSupabaseConfigured && !session) return <AuthPanel />
+  if (isSupabaseConfigured && !session) return <SecureAccessGate />
 
   const triggerRefresh = () => setRefreshKey((k) => k + 1)
 
