@@ -90,7 +90,6 @@ export function ActiveAccountsPage({ onOpenNewLoan }: Props) {
                   <th>Next Due</th>
                   <th className="amount-cell">Amount Due</th>
                   <th className="amount-cell">Collected</th>
-                  <th className="amount-cell">Balance</th>
                   <th>Status</th>
                   <th>Action</th>
                 </tr>
@@ -122,7 +121,6 @@ export function ActiveAccountsPage({ onOpenNewLoan }: Props) {
                       </td>
                       <td className="amount-cell">{currency.format(amountDue)}</td>
                       <td className="amount-cell">{currency.format(loan.total_collected)}</td>
-                      <td className="amount-cell text-highlight">{currency.format(loan.remaining_balance)}</td>
                       <td>
                         <span className="status-badge active">ACTIVE</span>
                       </td>

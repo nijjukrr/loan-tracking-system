@@ -135,12 +135,6 @@ export function BorrowerDetailPage() {
         </div>
 
         <div className="metric-card">
-          <span>Remaining Balance</span>
-          <strong className="text-highlight">{currency.format(loan.remaining_balance)}</strong>
-          <small>Status: {loan.status.toUpperCase()}</small>
-        </div>
-
-        <div className="metric-card">
           <span>Next Due Date</span>
           <strong>{nextDueDate}</strong>
           <small>Rule: Paid Date + {loan.mode === 'D' ? '10d' : '7d'}</small>

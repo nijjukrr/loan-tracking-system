@@ -93,7 +93,6 @@ export function RemindersPage() {
                       <th className="amount-cell">Principal</th>
                       <th className="amount-cell">Amount Due</th>
                       <th>Due Date</th>
-                      <th className="amount-cell">Remaining Balance</th>
                       <th>Action</th>
                     </tr>
                   </thead>
@@ -118,7 +117,6 @@ export function RemindersPage() {
                         <td>
                           <span className="due-tag due-today">{inst.due_date}</span>
                         </td>
-                        <td className="amount-cell">{currency.format(inst.loan?.remaining_balance || 0)}</td>
                         <td>
                           <button
                             type="button"
@@ -158,7 +156,6 @@ export function RemindersPage() {
                       <th>Days Overdue</th>
                       <th className="amount-cell">Amount Due</th>
                       <th className="amount-cell">Principal</th>
-                      <th className="amount-cell">Remaining Balance</th>
                       <th>Last Payment</th>
                       <th>Action</th>
                     </tr>
@@ -186,7 +183,6 @@ export function RemindersPage() {
                           </td>
                           <td className="amount-cell text-danger">{currency.format(inst.expected_amount - inst.paid_amount)}</td>
                           <td className="amount-cell">{currency.format(inst.loan?.principal || 0)}</td>
-                          <td className="amount-cell">{currency.format(inst.loan?.remaining_balance || 0)}</td>
                           <td>{inst.paid_date || 'No payment yet'}</td>
                           <td>
                             <button

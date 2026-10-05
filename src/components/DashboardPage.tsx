@@ -171,7 +171,6 @@ export function DashboardPage({ onOpenNewLoan }: Props) {
                     <th>Loan Date</th>
                     <th className="amount-cell">Principal</th>
                     <th className="amount-cell">Collected</th>
-                    <th className="amount-cell">Remaining Balance</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -190,7 +189,6 @@ export function DashboardPage({ onOpenNewLoan }: Props) {
                       <td>{loan.loan_date}</td>
                       <td className="amount-cell">{currency.format(loan.principal)}</td>
                       <td className="amount-cell">{currency.format(loan.total_collected)}</td>
-                      <td className="amount-cell text-highlight">{currency.format(loan.remaining_balance)}</td>
                       <td>
                         <Link to={`/borrower/${loan.id}`} className="secondary-button compact-button">
                           Details
