@@ -68,7 +68,7 @@ export function ClosedAccountsPage() {
                   <th>Start Date</th>
                   <th>Closed Date</th>
                   <th className="amount-cell">Total Collected</th>
-                  <th className="amount-cell">Realized Profit</th>
+                  <th className="amount-cell">Profit</th>
                   <th>Action</th>
                 </tr>
               </thead>

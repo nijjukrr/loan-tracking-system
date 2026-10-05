@@ -60,7 +60,7 @@ export function DashboardPage({ onOpenNewLoan }: Props) {
 
       {loading || !metrics ? (
         <section className="metrics-grid main-metrics-grid">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div className="metric-card skeleton-card" key={i} style={{ opacity: 0.6, minHeight: '110px' }}>
               <span className="skeleton-line" style={{ display: 'inline-block', width: '60%', height: '14px', background: 'var(--border-color, #e2e8f0)', borderRadius: '4px' }}></span>
               <strong className="skeleton-line" style={{ display: 'block', width: '80%', height: '28px', margin: '12px 0 8px', background: 'var(--border-color, #e2e8f0)', borderRadius: '4px' }}></strong>
@@ -87,12 +87,21 @@ export function DashboardPage({ onOpenNewLoan }: Props) {
             </div>
 
             <div className="metric-card success-card">
-              <span>Total Realized Profit</span>
-              <strong>{currency.format(metrics.totalProfit)}</strong>
-              <small>
-                Daily: {currency.format(metrics.dailyProfit)} · Weekly: {currency.format(metrics.weeklyProfit)} · 10%:{' '}
-                {currency.format(metrics.tenPercentProfit)}
-              </small>
+              <span>Daily Profit</span>
+              <strong>{currency.format(metrics.dailyProfit)}</strong>
+              <small>Interest actually received</small>
+            </div>
+
+            <div className="metric-card success-card">
+              <span>Weekly Closed Profit</span>
+              <strong>{currency.format(metrics.weeklyProfit)}</strong>
+              <small>Recognized after account closure</small>
+            </div>
+
+            <div className="metric-card success-card">
+              <span>10% Profit</span>
+              <strong>{currency.format(metrics.tenPercentProfit)}</strong>
+              <small>Manual and imported entries</small>
             </div>
 
             <div className="metric-card">
