@@ -1,16 +1,19 @@
 import { createClient } from '@supabase/supabase-js'
 
-const url = 'https://ajjaldaczjnmczdsfgln.supabase.co'
-const serviceRoleKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqamFsZGFjempubWN6ZHNmZ2xuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTE4MTc0OSwiZXhwIjoyMTA2NzU3NzQ5fQ._f-gTA8umgUz5zOPKw0vRU-SIXOy-w8j8PlQW9hkoCo'
+const url = process.env.SUPABASE_URL
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const email = process.env.FINANCE_ADMIN_EMAIL
+const password = process.env.FINANCE_ADMIN_PASSWORD
+
+if (!url || !serviceRoleKey || !email || !password) {
+  throw new Error('Set SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, FINANCE_ADMIN_EMAIL, and FINANCE_ADMIN_PASSWORD.')
+}
 
 const supabase = createClient(url, serviceRoleKey, {
   auth: { persistSession: false, autoRefreshToken: false }
 })
 
 async function createAdmin() {
-  const email = 'admin@financetracker.com'
-  const password = 'Password123!'
-
   console.log(`Creating user in Supabase Auth: ${email}…`)
 
   // Check if user exists or create
@@ -55,11 +58,7 @@ async function createAdmin() {
     console.log('Successfully registered admin user in app_members table!')
   }
 
-  console.log('\n=======================================')
-  console.log('LOGIN CREDENTIALS CREATED SUCCESSFULLY:')
-  console.log(`Email:    ${email}`)
-  console.log(`Password: ${password}`)
-  console.log('=======================================\n')
+  console.log('Admin account is ready. Credentials were not printed.')
 }
 
 createAdmin()

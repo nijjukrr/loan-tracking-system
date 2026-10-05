@@ -9,6 +9,8 @@
     "lint": "oxlint",
     "import:excel": "tsx scripts/import-excel.ts",
     "seed:supabase": "tsx scripts/seed-supabase.ts",
+    "finance:backup": "tsx scripts/finance-data-admin.ts backup",
+    "finance:clean-start": "tsx scripts/finance-data-admin.ts reset CLEAN_START",
     "preview": "vite preview",
     "test": "vitest run",
     "verify:import": "vitest run scripts/import-excel.test.ts"

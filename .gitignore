@@ -15,6 +15,9 @@ dist-ssr
 .env.*
 !.env.example
 
+# Private finance exports created by the clean-start admin script
+backups/
+
 
 # Editor directories and files
 .vscode/*
