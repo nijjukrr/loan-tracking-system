@@ -8,6 +8,10 @@ import {
 } from '../src/lib/financeLogic'
 
 async function seedSupabase() {
+  try {
+    process.loadEnvFile?.('.env')
+  } catch {}
+
   const supabaseUrl = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL)?.trim()
   const supabaseKey = (
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
