@@ -39,18 +39,19 @@ export interface FinanceApi {
   tagMainTransaction(transactionId: string): Promise<TenPercentEntry>
 }
 
-const STORAGE_KEY_LOANS = 'finance-tracker-loans-v3'
-const STORAGE_KEY_INSTALLMENTS = 'finance-tracker-installments-v3'
-const STORAGE_KEY_PAYMENTS = 'finance-tracker-payments-v3'
-const STORAGE_KEY_TEN_PERCENT = 'finance-tracker-ten-percent-v3'
-const STORAGE_KEY_MAIN_TX = 'finance-tracker-main-tx-v3'
+const STORAGE_KEY_LOANS = 'finance-tracker-loans-v4'
+const STORAGE_KEY_INSTALLMENTS = 'finance-tracker-installments-v4'
+const STORAGE_KEY_PAYMENTS = 'finance-tracker-payments-v4'
+const STORAGE_KEY_TEN_PERCENT = 'finance-tracker-ten-percent-v4'
+const STORAGE_KEY_MAIN_TX = 'finance-tracker-main-tx-v4'
 
 function buildInitialData() {
   const loans: Loan[] = []
   const installments: Installment[] = []
   const payments: Payment[] = []
 
-  const rawLoans = importedData.loans || []
+  const localOnly = import.meta.env.VITE_LOCAL_ONLY === 'true'
+  const rawLoans = localOnly ? [] : (importedData.loans || [])
   const todayStr = formatDateISO(new Date())
 
   rawLoans.forEach((raw) => {
@@ -141,7 +142,7 @@ function buildInitialData() {
     installments.push(...loanInsts)
   })
 
-  const mainTransactions: MainTransaction[] = (importedData.mainTransactions || []).map((mt) => ({
+  const mainTransactions: MainTransaction[] = (localOnly ? [] : (importedData.mainTransactions || [])).map((mt) => ({
     id: `mt-${mt.mainSheetNo}`,
     main_sheet_no: mt.mainSheetNo,
     transaction_date: mt.date,
@@ -150,7 +151,7 @@ function buildInitialData() {
     category: mt.category as '10PCT' | null,
   }))
 
-  const tenPercentEntries: TenPercentEntry[] = ((importedData.tenPercentEntries || []) as Array<{ date: string; particulars: string; amount: number; mainSheetNo: number }>).map((tp, i) => ({
+  const tenPercentEntries: TenPercentEntry[] = ((localOnly ? [] : (importedData.tenPercentEntries || [])) as Array<{ date: string; particulars: string; amount: number; mainSheetNo: number }>).map((tp, i) => ({
     id: `tp-${i + 1}`,
     entry_date: tp.date,
     particulars: tp.particulars,
