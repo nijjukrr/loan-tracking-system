@@ -454,17 +454,18 @@ class SupabaseFinanceApi implements FinanceApi {
     const { data: loan, error: loanErr } = await supabase!.from('loans').select('*').eq('id', id).single()
     if (loanErr || !loan) return null
 
-    const { data: installments } = await supabase!
-      .from('installments')
-      .select('*')
-      .eq('loan_id', id)
-      .order('installment_number', { ascending: true })
-
-    const { data: payments } = await supabase!
-      .from('payments')
-      .select('*')
-      .eq('loan_id', id)
-      .order('payment_date', { ascending: false })
+    const [{ data: installments }, { data: payments }] = await Promise.all([
+      supabase!
+        .from('installments')
+        .select('*')
+        .eq('loan_id', id)
+        .order('installment_number', { ascending: true }),
+      supabase!
+        .from('payments')
+        .select('*')
+        .eq('loan_id', id)
+        .order('payment_date', { ascending: false })
+    ])
 
     return {
       loan: loan as Loan,
@@ -474,13 +475,160 @@ class SupabaseFinanceApi implements FinanceApi {
   }
 
   async createLoan(input: NewLoanInput) {
-    const localFallback = new LocalPreviewFinanceApi()
-    return localFallback.createLoan(input)
+    const isDaily = input.mode === 'D'
+    const principal = Number(input.principal)
+    const interestAmount = isDaily ? (input.interest_amount || Math.round(principal * 0.03)) : 0
+    const weeklyPayment = !isDaily ? (input.weekly_payment || 3000) : 0
+    const totalExpected = isDaily ? principal + interestAmount * 6 : weeklyPayment * 10
+
+    const { data: loan, error: loanErr } = await supabase!
+      .from('loans')
+      .insert({
+        main_sheet_no: input.main_sheet_no,
+        customer_name: input.customer_name.trim(),
+        mode: input.mode,
+        loan_date: input.loan_date,
+        principal,
+        interest_amount: interestAmount,
+        weekly_payment: weeklyPayment,
+        total_expected: totalExpected,
+        total_collected: 0,
+        remaining_balance: totalExpected,
+        status: 'active',
+      })
+      .select('*')
+      .single()
+
+    if (loanErr || !loan) throw loanErr || new Error('Failed to create loan in database')
+
+    const insts = isDaily
+      ? generateDailyInstallments(loan.id, input.loan_date, input.first_due_date, interestAmount)
+      : generateWeeklyInstallments(loan.id, input.loan_date, input.first_due_date, weeklyPayment)
+
+    const dbInsts = insts.map((inst) => ({
+      loan_id: loan.id,
+      installment_number: inst.installment_number,
+      due_date: inst.due_date,
+      expected_amount: inst.expected_amount,
+      paid_amount: 0,
+      status: inst.status,
+    }))
+
+    const { error: instErr } = await supabase!.from('installments').insert(dbInsts)
+    if (instErr) console.warn('Warning inserting installments:', instErr.message)
+
+    return loan as Loan
   }
 
   async recordPayment(input: NewPaymentInput) {
-    const localFallback = new LocalPreviewFinanceApi()
-    return localFallback.recordPayment(input)
+    // 1. Fetch target loan
+    const { data: loan, error: lErr } = await supabase!
+      .from('loans')
+      .select('*')
+      .eq('id', input.loan_id)
+      .single()
+
+    if (lErr || !loan) throw new Error(`Loan not found: ${lErr?.message || 'Invalid ID'}`)
+
+    // 2. Fetch installments for this loan
+    const { data: installments, error: instErr } = await supabase!
+      .from('installments')
+      .select('*')
+      .eq('loan_id', loan.id)
+      .order('installment_number', { ascending: true })
+
+    if (instErr) throw new Error(`Unable to load loan installments: ${instErr.message}`)
+
+    const loanInsts = (installments || []) as Installment[]
+    const targetInst = input.installment_id
+      ? loanInsts.find((i) => i.id === input.installment_id)
+      : loanInsts.find((i) => i.status !== 'Paid') || loanInsts[0]
+
+    const paymentAmount = Number(input.amount)
+
+    // 3. Insert payment record
+    const { data: payment, error: payErr } = await supabase!
+      .from('payments')
+      .insert({
+        loan_id: loan.id,
+        installment_id: targetInst?.id || null,
+        customer_id: loan.customer_id || null,
+        customer_name: loan.customer_name,
+        main_sheet_no: loan.main_sheet_no,
+        mode: loan.mode,
+        payment_date: input.paid_date,
+        amount: paymentAmount,
+        payment_type: input.payment_type,
+        note: input.note?.trim() || null,
+      })
+      .select('*')
+      .single()
+
+    if (payErr || !payment) throw new Error(`Unable to save payment: ${payErr?.message || 'Database insert failed'}`)
+
+    // 4. Update target installment status
+    if (targetInst) {
+      const updatedPaidAmount = Number(targetInst.paid_amount || 0) + paymentAmount
+      const newStatus = getInstallmentStatus(targetInst.due_date, input.paid_date, updatedPaidAmount, targetInst.expected_amount)
+
+      const { error: upInstErr } = await supabase!
+        .from('installments')
+        .update({
+          paid_date: input.paid_date,
+          paid_amount: updatedPaidAmount,
+          status: newStatus,
+        })
+        .eq('id', targetInst.id)
+
+      if (upInstErr) console.warn('Installment update warning:', upInstErr)
+      targetInst.paid_date = input.paid_date
+      targetInst.paid_amount = updatedPaidAmount
+      targetInst.status = newStatus
+    }
+
+    // 5. Update next due date on next unpaid installment according to rule
+    const nextDueDate = calculateNextDueDate(loan.mode, input.paid_date)
+    const targetIndex = loanInsts.findIndex((i) => i.id === targetInst?.id)
+    if (targetIndex >= 0 && targetIndex + 1 < loanInsts.length) {
+      const nextInst = loanInsts[targetIndex + 1]
+      const nextStatus = getInstallmentStatus(nextDueDate, nextInst.paid_date, nextInst.paid_amount, nextInst.expected_amount)
+      await supabase!
+        .from('installments')
+        .update({
+          due_date: nextDueDate,
+          status: nextStatus,
+        })
+        .eq('id', nextInst.id)
+
+      nextInst.due_date = nextDueDate
+      nextInst.status = nextStatus
+    }
+
+    // 6. Update loan totals
+    const newTotalCollected = Number(loan.total_collected || 0) + paymentAmount
+    const newRemainingBalance = Math.max(0, Number(loan.total_expected || 0) - newTotalCollected)
+    const isClosed = newRemainingBalance === 0
+    const updatedStatus = isClosed ? 'closed' : loan.status
+
+    const { data: updatedLoan, error: upLoanErr } = await supabase!
+      .from('loans')
+      .update({
+        total_collected: newTotalCollected,
+        remaining_balance: newRemainingBalance,
+        status: updatedStatus,
+        closed_at: isClosed ? new Date().toISOString() : loan.closed_at,
+      })
+      .eq('id', loan.id)
+      .select('*')
+      .single()
+
+    if (upLoanErr) console.warn('Loan total update warning:', upLoanErr)
+
+    return {
+      loan: (updatedLoan || { ...loan, total_collected: newTotalCollected, remaining_balance: newRemainingBalance, status: updatedStatus }) as Loan,
+      payment: payment as Payment,
+      installments: loanInsts,
+    }
   }
 
   async closeLoan(id: string) {
@@ -508,8 +656,24 @@ class SupabaseFinanceApi implements FinanceApi {
   }
 
   async getDashboardMetrics() {
-    const localFallback = new LocalPreviewFinanceApi()
-    return localFallback.getDashboardMetrics()
+    const [loansRes, instsRes, paysRes, tpRes] = await Promise.all([
+      supabase!.from('loans').select('*'),
+      supabase!.from('installments').select('*'),
+      supabase!.from('payments').select('*'),
+      supabase!.from('ten_percent_entries').select('*'),
+    ])
+
+    if (loansRes.error) throw new Error(`Unable to load dashboard totals: ${loansRes.error.message}`)
+    if (instsRes.error) throw new Error(`Unable to load dashboard totals: ${instsRes.error.message}`)
+    if (paysRes.error) throw new Error(`Unable to load dashboard totals: ${paysRes.error.message}`)
+    if (tpRes.error) throw new Error(`Unable to load dashboard totals: ${tpRes.error.message}`)
+
+    return computeDashboardMetrics(
+      loansRes.data || [],
+      instsRes.data || [],
+      paysRes.data || [],
+      tpRes.data || []
+    )
   }
 
   async listTenPercentEntries() {
