@@ -1,0 +1,443 @@
+{
+  "source": {
+    "fileName": "nijju2026.xlsx",
+    "sha256": "1635ebc217b254a66a148f09b844a537813d476e47550b24150c7ec51d721e75",
+    "importedAt": "2026-10-05T09:57:18.183Z"
+  },
+  "verification": {
+    "mainRows": 29,
+    "dailyCount": 8,
+    "dailyPrincipal": 125000,
+    "dailyMainSheetNos": [
+      3,
+      4,
+      8,
+      15,
+      23,
+      24,
+      25,
+      29
+    ],
+    "weeklyCount": 1,
+    "weeklyPrincipal": 27000,
+    "weeklyMainSheetNos": [
+      14
+    ],
+    "tenPercentCount": 0,
+    "tenPercentProfit": 0
+  },
+  "mainTransactions": [
+    {
+      "sourceKey": "nijju2026.xlsx:1",
+      "mainSheetNo": 1,
+      "date": "2026-09-20",
+      "particulars": "E.B.PONNIYAN",
+      "mode": null,
+      "debit": 0,
+      "credit": 27000,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:2",
+      "mainSheetNo": 2,
+      "date": "2026-09-21",
+      "particulars": "SATHESH-MAPLAI",
+      "mode": null,
+      "debit": 0,
+      "credit": 13000,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:3",
+      "mainSheetNo": 3,
+      "date": "2026-09-21",
+      "particulars": "YUVARAJ-DMK",
+      "mode": "D",
+      "debit": 10000,
+      "credit": 0,
+      "remarks": "01-10-2026 INT RECD",
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:4",
+      "mainSheetNo": 4,
+      "date": "2026-09-21",
+      "particulars": "KARUPPASMY-AVNPDR",
+      "mode": "D",
+      "debit": 10000,
+      "credit": 0,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:5",
+      "mainSheetNo": 5,
+      "date": "2026-09-22",
+      "particulars": "GANESAMURTHI",
+      "mode": null,
+      "debit": 0,
+      "credit": 50,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:6",
+      "mainSheetNo": 6,
+      "date": "2026-09-22",
+      "particulars": "NARAYANAKUMAR",
+      "mode": null,
+      "debit": 0,
+      "credit": 600,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:7",
+      "mainSheetNo": 7,
+      "date": "2026-09-22",
+      "particulars": "GOVIND",
+      "mode": null,
+      "debit": 0,
+      "credit": 730,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:8",
+      "mainSheetNo": 8,
+      "date": "2026-09-22",
+      "particulars": "KAVITHA-PARAMESHWARAN",
+      "mode": "D",
+      "debit": 15000,
+      "credit": 0,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:9",
+      "mainSheetNo": 9,
+      "date": "2026-09-23",
+      "particulars": "ARUN-KMRJNGR",
+      "mode": null,
+      "debit": 0,
+      "credit": 230,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:10",
+      "mainSheetNo": 10,
+      "date": "2026-09-23",
+      "particulars": "UMA-KILAKULAM",
+      "mode": null,
+      "debit": 0,
+      "credit": 580,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:11",
+      "mainSheetNo": 11,
+      "date": "2026-09-24",
+      "particulars": "RATHIKA-COIMBATORE",
+      "mode": null,
+      "debit": 0,
+      "credit": 50000,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:12",
+      "mainSheetNo": 12,
+      "date": "2026-09-24",
+      "particulars": "GURUSAMY-CMPLM",
+      "mode": null,
+      "debit": 0,
+      "credit": 30000,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:13",
+      "mainSheetNo": 13,
+      "date": "2026-09-24",
+      "particulars": "FOR-7000/MT+INT",
+      "mode": null,
+      "debit": 0,
+      "credit": 140,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:14",
+      "mainSheetNo": 14,
+      "date": "2026-09-27",
+      "particulars": "AJITH-ANITHA",
+      "mode": "W",
+      "debit": 27000,
+      "credit": 0,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:15",
+      "mainSheetNo": 15,
+      "date": "2026-09-28",
+      "particulars": "PATTANI",
+      "mode": "D",
+      "debit": 10000,
+      "credit": 10000,
+      "remarks": "3/10/26 AMT RECD",
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:16",
+      "mainSheetNo": 16,
+      "date": "2026-09-28",
+      "particulars": "DIVYA",
+      "mode": null,
+      "debit": 0,
+      "credit": 100,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:17",
+      "mainSheetNo": 17,
+      "date": "2026-09-28",
+      "particulars": "BALACHANDAR",
+      "mode": null,
+      "debit": 0,
+      "credit": 700,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:18",
+      "mainSheetNo": 18,
+      "date": "2026-09-30",
+      "particulars": "KALYANAM",
+      "mode": null,
+      "debit": 0,
+      "credit": 550,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:19",
+      "mainSheetNo": 19,
+      "date": "2026-09-30",
+      "particulars": "JYOTHIMANI",
+      "mode": null,
+      "debit": 0,
+      "credit": 10000,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:20",
+      "mainSheetNo": 20,
+      "date": "2026-10-01",
+      "particulars": "MUBARAK",
+      "mode": null,
+      "debit": 0,
+      "credit": 600,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:21",
+      "mainSheetNo": 21,
+      "date": "2026-10-01",
+      "particulars": "GOVIND",
+      "mode": null,
+      "debit": 0,
+      "credit": 400,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:22",
+      "mainSheetNo": 22,
+      "date": "2026-10-01",
+      "particulars": "YUVARAJ-DMK",
+      "mode": null,
+      "debit": 0,
+      "credit": 500,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:23",
+      "mainSheetNo": 23,
+      "date": "2026-10-01",
+      "particulars": "PATTANI",
+      "mode": "D",
+      "debit": 10000,
+      "credit": 90,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:24",
+      "mainSheetNo": 24,
+      "date": "2026-10-01",
+      "particulars": "PRAKASH-VLPLM",
+      "mode": "D",
+      "debit": 40000,
+      "credit": 0,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:25",
+      "mainSheetNo": 25,
+      "date": "2026-10-02",
+      "particulars": "PATTANI",
+      "mode": "D",
+      "debit": 10000,
+      "credit": 60,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:26",
+      "mainSheetNo": 26,
+      "date": "2026-10-03",
+      "particulars": "KAVITHA-PARAMESHWARAN",
+      "mode": null,
+      "debit": 0,
+      "credit": 500,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:27",
+      "mainSheetNo": 27,
+      "date": "2026-10-04",
+      "particulars": "MURUGESH-PWROFF",
+      "mode": null,
+      "debit": 0,
+      "credit": 330,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:28",
+      "mainSheetNo": 28,
+      "date": "2026-10-04",
+      "particulars": "SATHISH-TNDKRMPLM",
+      "mode": null,
+      "debit": 0,
+      "credit": 25000,
+      "remarks": null,
+      "category": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:29",
+      "mainSheetNo": 29,
+      "date": "2026-10-04",
+      "particulars": "KAVITHA-PARAMESHWARAN",
+      "mode": "D",
+      "debit": 20000,
+      "credit": 0,
+      "remarks": null,
+      "category": null
+    }
+  ],
+  "loans": [
+    {
+      "sourceKey": "nijju2026.xlsx:3",
+      "mainSheetNo": 3,
+      "customerName": "YUVARAJ-DMK",
+      "mode": "D",
+      "loanDate": "2026-09-21",
+      "principal": 10000,
+      "sourceCredit": 0,
+      "sourceRemarks": "01-10-2026 INT RECD"
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:4",
+      "mainSheetNo": 4,
+      "customerName": "KARUPPASMY-AVNPDR",
+      "mode": "D",
+      "loanDate": "2026-09-21",
+      "principal": 10000,
+      "sourceCredit": 0,
+      "sourceRemarks": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:8",
+      "mainSheetNo": 8,
+      "customerName": "KAVITHA-PARAMESHWARAN",
+      "mode": "D",
+      "loanDate": "2026-09-22",
+      "principal": 15000,
+      "sourceCredit": 0,
+      "sourceRemarks": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:14",
+      "mainSheetNo": 14,
+      "customerName": "AJITH-ANITHA",
+      "mode": "W",
+      "loanDate": "2026-09-27",
+      "principal": 27000,
+      "sourceCredit": 0,
+      "sourceRemarks": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:15",
+      "mainSheetNo": 15,
+      "customerName": "PATTANI",
+      "mode": "D",
+      "loanDate": "2026-09-28",
+      "principal": 10000,
+      "sourceCredit": 10000,
+      "sourceRemarks": "3/10/26 AMT RECD"
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:23",
+      "mainSheetNo": 23,
+      "customerName": "PATTANI",
+      "mode": "D",
+      "loanDate": "2026-10-01",
+      "principal": 10000,
+      "sourceCredit": 90,
+      "sourceRemarks": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:24",
+      "mainSheetNo": 24,
+      "customerName": "PRAKASH-VLPLM",
+      "mode": "D",
+      "loanDate": "2026-10-01",
+      "principal": 40000,
+      "sourceCredit": 0,
+      "sourceRemarks": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:25",
+      "mainSheetNo": 25,
+      "customerName": "PATTANI",
+      "mode": "D",
+      "loanDate": "2026-10-02",
+      "principal": 10000,
+      "sourceCredit": 60,
+      "sourceRemarks": null
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:29",
+      "mainSheetNo": 29,
+      "customerName": "KAVITHA-PARAMESHWARAN",
+      "mode": "D",
+      "loanDate": "2026-10-04",
+      "principal": 20000,
+      "sourceCredit": 0,
+      "sourceRemarks": null
+    }
+  ],
+  "tenPercentEntries": []
+}
