@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { financeApi } from '../lib/financeApi'
-import { calculateNextDueDate, differenceInDays, formatDateISO } from '../lib/financeLogic'
+import { calculateNextDueDate } from '../lib/financeLogic'
 import type { Installment, Loan, Payment } from '../types'
 import { MarkPaidModal } from './MarkPaidModal'
 
@@ -63,21 +63,24 @@ export function BorrowerDetailPage() {
     )
   }
 
-  const todayStr = formatDateISO(new Date())
-  const loanAge = differenceInDays(loan.loan_date, todayStr)
-
   const latestPaid = payments[0]?.payment_date || loan.loan_date
   const nextDueDate = loan.status === 'closed' ? 'Closed' : calculateNextDueDate(loan.mode, latestPaid)
 
-  const interestCollected = payments
-    .filter((p) => p.payment_type === 'Interest' || p.payment_type === 'Weekly Installment' || p.payment_type === 'Partial')
+  const interestReceived = payments
+    .filter((p) => p.payment_type === 'Interest')
+    .reduce((sum, p) => sum + p.amount, 0)
+
+  const weeklyReceived = payments
+    .filter((p) => p.payment_type === 'Weekly Installment' || p.payment_type === 'Partial')
     .reduce((sum, p) => sum + p.amount, 0)
 
   const principalCollected = payments
     .filter((p) => p.payment_type === 'Principal')
     .reduce((sum, p) => sum + p.amount, 0)
 
-  const realizedProfit = loan.mode === 'D' ? interestCollected : Math.max(0, loan.total_collected - loan.principal)
+  const accountProfit = loan.mode === 'D'
+    ? interestReceived
+    : loan.status === 'closed' ? Math.max(0, loan.total_expected - loan.principal) : 0
 
   return (
     <>
@@ -141,9 +144,8 @@ export function BorrowerDetailPage() {
         </div>
 
         <div className="metric-card">
-          <span>Realized Profit</span>
-          <strong className="text-success">{currency.format(realizedProfit)}</strong>
-          <small>Loan Age: {loanAge} days</small>
+          <span>Profit From This Account</span>
+          <strong className="text-success">{loan.mode === 'W' && loan.status === 'active' ? 'Pending' : currency.format(accountProfit)}</strong>
         </div>
       </section>
 
@@ -164,8 +166,8 @@ export function BorrowerDetailPage() {
             <strong>{loan.mode === 'D' ? 'Daily (10-Day Cycle)' : 'Weekly (10 Weeks)'}</strong>
           </div>
           <div>
-            <span>Interest Collected</span>
-            <strong>{currency.format(interestCollected)}</strong>
+            <span>{loan.mode === 'D' ? 'Interest Received' : 'Weekly Payments Received'}</span>
+            <strong>{currency.format(loan.mode === 'D' ? interestReceived : weeklyReceived)}</strong>
           </div>
           <div>
             <span>Principal Collected</span>
