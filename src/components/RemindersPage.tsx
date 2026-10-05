@@ -10,16 +10,21 @@ const currency = new Intl.NumberFormat('en-IN', { style: 'currency', currency: '
 export function RemindersPage() {
   const [installments, setInstallments] = useState<Array<Installment & { loan?: Loan }>>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null)
   const [selectedInst, setSelectedInst] = useState<Installment | null>(null)
   const [showPayModal, setShowPayModal] = useState(false)
 
   const loadData = () => {
     setLoading(true)
+    setError('')
     financeApi
       .listInstallments()
       .then((data) => setInstallments(data))
-      .catch((err) => console.error(err))
+      .catch((err) => {
+        console.error('Reminders load error:', err)
+        setError(err instanceof Error ? err.message : 'Unable to load payment schedules.')
+      })
       .finally(() => setLoading(false))
   }
 
@@ -59,6 +64,8 @@ export function RemindersPage() {
           </p>
         </div>
       </header>
+
+      {error && <div className="form-message error-message" style={{ marginBottom: '1rem' }}>{error}</div>}
 
       {loading ? (
         <div className="empty-state">Loading reminders…</div>
