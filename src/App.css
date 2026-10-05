@@ -333,6 +333,39 @@ h2 {
   font-size: 12px;
 }
 
+.profit-card {
+  width: min(100%, 320px);
+  display: grid;
+  gap: 6px;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--positive);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(31, 41, 51, 0.03);
+}
+
+.profit-card span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.profit-card strong {
+  color: var(--ink);
+  font-size: 26px;
+  letter-spacing: -0.02em;
+}
+
+.profit-card small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+
 .highlight-card {
   border-left: 4px solid var(--accent);
 }
