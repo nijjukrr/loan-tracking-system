@@ -2,7 +2,7 @@
   "source": {
     "fileName": "nijju2026.xlsx",
     "sha256": "1635ebc217b254a66a148f09b844a537813d476e47550b24150c7ec51d721e75",
-    "importedAt": "2026-10-05T09:57:18.183Z"
+    "importedAt": "2026-10-05T13:14:05.411Z"
   },
   "verification": {
     "mainRows": 29,
@@ -23,8 +23,8 @@
     "weeklyMainSheetNos": [
       14
     ],
-    "tenPercentCount": 0,
-    "tenPercentProfit": 0
+    "tenPercentCount": 20,
+    "tenPercentProfit": 161010
   },
   "mainTransactions": [
     {
@@ -439,5 +439,146 @@
       "sourceRemarks": null
     }
   ],
-  "tenPercentEntries": []
+  "tenPercentEntries": [
+    {
+      "sourceKey": "nijju2026.xlsx:1",
+      "mainSheetNo": 1,
+      "date": "2026-09-20",
+      "particulars": "E.B.PONNIYAN",
+      "amount": 27000
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:2",
+      "mainSheetNo": 2,
+      "date": "2026-09-21",
+      "particulars": "SATHESH-MAPLAI",
+      "amount": 13000
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:5",
+      "mainSheetNo": 5,
+      "date": "2026-09-22",
+      "particulars": "GANESAMURTHI",
+      "amount": 50
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:6",
+      "mainSheetNo": 6,
+      "date": "2026-09-22",
+      "particulars": "NARAYANAKUMAR",
+      "amount": 600
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:7",
+      "mainSheetNo": 7,
+      "date": "2026-09-22",
+      "particulars": "GOVIND",
+      "amount": 730
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:9",
+      "mainSheetNo": 9,
+      "date": "2026-09-23",
+      "particulars": "ARUN-KMRJNGR",
+      "amount": 230
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:10",
+      "mainSheetNo": 10,
+      "date": "2026-09-23",
+      "particulars": "UMA-KILAKULAM",
+      "amount": 580
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:11",
+      "mainSheetNo": 11,
+      "date": "2026-09-24",
+      "particulars": "RATHIKA-COIMBATORE",
+      "amount": 50000
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:12",
+      "mainSheetNo": 12,
+      "date": "2026-09-24",
+      "particulars": "GURUSAMY-CMPLM",
+      "amount": 30000
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:13",
+      "mainSheetNo": 13,
+      "date": "2026-09-24",
+      "particulars": "FOR-7000/MT+INT",
+      "amount": 140
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:16",
+      "mainSheetNo": 16,
+      "date": "2026-09-28",
+      "particulars": "DIVYA",
+      "amount": 100
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:17",
+      "mainSheetNo": 17,
+      "date": "2026-09-28",
+      "particulars": "BALACHANDAR",
+      "amount": 700
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:18",
+      "mainSheetNo": 18,
+      "date": "2026-09-30",
+      "particulars": "KALYANAM",
+      "amount": 550
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:19",
+      "mainSheetNo": 19,
+      "date": "2026-09-30",
+      "particulars": "JYOTHIMANI",
+      "amount": 10000
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:20",
+      "mainSheetNo": 20,
+      "date": "2026-10-01",
+      "particulars": "MUBARAK",
+      "amount": 600
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:21",
+      "mainSheetNo": 21,
+      "date": "2026-10-01",
+      "particulars": "GOVIND",
+      "amount": 400
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:22",
+      "mainSheetNo": 22,
+      "date": "2026-10-01",
+      "particulars": "YUVARAJ-DMK",
+      "amount": 500
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:26",
+      "mainSheetNo": 26,
+      "date": "2026-10-03",
+      "particulars": "KAVITHA-PARAMESHWARAN",
+      "amount": 500
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:27",
+      "mainSheetNo": 27,
+      "date": "2026-10-04",
+      "particulars": "MURUGESH-PWROFF",
+      "amount": 330
+    },
+    {
+      "sourceKey": "nijju2026.xlsx:28",
+      "mainSheetNo": 28,
+      "date": "2026-10-04",
+      "particulars": "SATHISH-TNDKRMPLM",
+      "amount": 25000
+    }
+  ]
 }

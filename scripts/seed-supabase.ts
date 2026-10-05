@@ -156,7 +156,27 @@ async function seedSupabase() {
     }
   }
 
-  // 3. Verification Report Query
+  // 3. Seed 10% Profit Entries
+  const rawTenPct = importedData.tenPercentEntries || []
+  console.log(`Seeding ${rawTenPct.length} 10% Profit entries…`)
+  const { data: existingTenPct } = await supabase.from('ten_percent_entries').select('main_sheet_no, particulars')
+  const existingSheetNos = new Set((existingTenPct || []).map((e) => e.main_sheet_no).filter(Boolean))
+
+  for (const tp of rawTenPct) {
+    if (tp.mainSheetNo && existingSheetNos.has(tp.mainSheetNo)) continue
+    const { error: tpErr } = await supabase.from('ten_percent_entries').insert({
+      entry_date: tp.date,
+      particulars: tp.particulars,
+      amount: tp.amount,
+      main_sheet_no: tp.mainSheetNo,
+      notes: 'Imported from Excel MAIN sheet',
+      source_kind: 'manual',
+    })
+    if (tpErr) console.warn(`Error inserting 10% entry #${tp.mainSheetNo}: ${tpErr.message}`)
+  }
+
+
+  // 4. Verification Report Query
   console.log('\n--- VERIFICATION REPORT FROM SUPABASE ---')
   const { data: dbLoans } = await supabase.from('loans').select('*')
   const { data: dbMainTx } = await supabase.from('main_transactions').select('*')
@@ -172,10 +192,12 @@ async function seedSupabase() {
   console.log(`Weekly Accounts: ${weeklyLoans.length} (Expected: 1)`)
   console.log(`Weekly Principal: ₹${weeklyPrincipal.toLocaleString('en-IN')} (Expected: ₹27,000)`)
   console.log(`Total Money Lent: ₹${(dailyPrincipal + weeklyPrincipal).toLocaleString('en-IN')} (Expected: ₹1,52,000)`)
-  console.log(`10% Entries: ${(dbTenPct || []).length} (Expected: 0)`)
+  console.log(`10% Entries: ${(dbTenPct || []).length} (Expected: 20)`)
+  console.log(`10% Total Profit: ₹${(dbTenPct || []).reduce((sum, e) => sum + Number(e.amount), 0).toLocaleString('en-IN')} (Expected: ₹1,61,010)`)
   console.log(`MAIN Rows: ${(dbMainTx || []).length} (Expected: 29)`)
   console.log('-----------------------------------------\n')
 }
+
 
 seedSupabase().catch((err) => {
   console.error('Seed error:', err)

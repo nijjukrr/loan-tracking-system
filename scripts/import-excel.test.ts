@@ -14,9 +14,10 @@ describe('verified Excel import', () => {
       weeklyCount: 1,
       weeklyPrincipal: 27000,
       weeklyMainSheetNos: [14],
-      tenPercentCount: 0,
-      tenPercentProfit: 0,
+      tenPercentCount: 20,
+      tenPercentProfit: 161010,
     })
+
     expect(new Set(result.loans.map((loan) => loan.sourceKey)).size).toBe(result.loans.length)
   })
 })

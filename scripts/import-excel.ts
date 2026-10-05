@@ -119,7 +119,7 @@ export async function parseFinanceWorkbook(filePath: string): Promise<ImportedFi
   const daily = loans.filter((loan) => loan.mode === 'D')
   const weekly = loans.filter((loan) => loan.mode === 'W')
   const tenPercentEntries = mainTransactions
-    .filter((row) => row.category === '10PCT')
+    .filter((row) => row.mode === null && row.credit > 0)
     .map((row) => ({
       sourceKey: row.sourceKey,
       mainSheetNo: row.mainSheetNo,
@@ -127,6 +127,7 @@ export async function parseFinanceWorkbook(filePath: string): Promise<ImportedFi
       particulars: row.particulars,
       amount: row.credit,
     }))
+
 
   return {
     source: { fileName, sha256: sourceHash, importedAt: new Date().toISOString() },
