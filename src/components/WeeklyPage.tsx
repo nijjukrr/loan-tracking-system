@@ -14,16 +14,21 @@ type Props = {
 export function WeeklyPage({ onOpenNewLoan }: Props) {
   const [loans, setLoans] = useState<Loan[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null)
   const [showPayModal, setShowPayModal] = useState(false)
 
   const loadData = () => {
     setLoading(true)
+    setError('')
     financeApi
       .listLoans({ mode: 'W', search })
       .then((data) => setLoans(data))
-      .catch((err) => console.error(err))
+      .catch((err) => {
+        console.error('Weekly loans load error:', err)
+        setError(err instanceof Error ? err.message : 'Unable to load Weekly accounts.')
+      })
       .finally(() => setLoading(false))
   }
 
@@ -32,6 +37,7 @@ export function WeeklyPage({ onOpenNewLoan }: Props) {
   }, [search])
 
   const todayStr = formatDateISO(new Date())
+  const moneyGiven = loans.reduce((sum, l) => sum + Number(l.principal || 0), 0)
 
   return (
     <>
@@ -40,7 +46,7 @@ export function WeeklyPage({ onOpenNewLoan }: Props) {
           <p className="eyebrow">7-Day Weekly Installment Loans</p>
           <h1>Weekly Loans</h1>
           <p className="page-description">
-            Weekly loans are paid every 7 days across 10 weeks (e.g. ₹27,000 principal → 10 payments of ₹3,000 = ₹30,000 total expected, ₹3,000 profit).
+            Weekly loans are paid every 7 days across 10 weeks. Next due date advances automatically upon payment.
           </p>
         </div>
         <div className="header-actions">
@@ -50,10 +56,26 @@ export function WeeklyPage({ onOpenNewLoan }: Props) {
         </div>
       </header>
 
+      {/* Summary Cards */}
+      <section className="metrics-grid" style={{ marginBottom: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+        <div className="metric-card highlight-card">
+          <span>Money Given</span>
+          <strong>{currency.format(moneyGiven)}</strong>
+          <small>Total Weekly principal lent</small>
+        </div>
+        <div className="metric-card">
+          <span>Money Collected</span>
+          <strong>₹0</strong>
+          <small>Weekly collections (pending logic)</small>
+        </div>
+      </section>
+
+      {error && <div className="form-message error-message" style={{ marginBottom: '1rem' }}>{error}</div>}
+
       <section className="search-bar-card">
         <input
           type="search"
-          placeholder="Search weekly loans by customer or Main Sheet No…"
+          placeholder="Search weekly loans by customer name…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -63,7 +85,6 @@ export function WeeklyPage({ onOpenNewLoan }: Props) {
         <div className="table-heading">
           <div>
             <h2>Weekly Accounts ({loans.length})</h2>
-            <p>Money Lent: {currency.format(loans.reduce((sum, l) => sum + l.principal, 0))}</p>
           </div>
         </div>
 
@@ -79,30 +100,21 @@ export function WeeklyPage({ onOpenNewLoan }: Props) {
             <table>
               <thead>
                 <tr>
-                  <th>Customer</th>
-                  <th>Main Sheet No</th>
-                  <th>Borrowed Date</th>
-                  <th className="amount-cell">Principal</th>
-                  <th className="amount-cell">Weekly Payment</th>
-                  <th className="amount-cell">Total Expected</th>
-                  <th>Weeks Paid</th>
-                  <th>Weeks Remaining</th>
+                  <th>Name</th>
+                  <th>Loan Date</th>
+                  <th className="amount-cell">Weekly Amount</th>
                   <th>Next Due</th>
-                  <th className="amount-cell">Total Received</th>
-                  <th className="amount-cell">Remaining</th>
-                  <th className="amount-cell">Profit</th>
+                  <th>Weeks Paid</th>
                   <th>Status</th>
-                  <th>Action</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loans.map((loan) => {
                   const weeksPaid = Math.floor(loan.total_collected / (loan.weekly_payment || 3000))
-                  const weeksRemaining = Math.max(0, 10 - weeksPaid)
                   const nextDue = calculateNextDueDate('W', loan.loan_date)
                   const isOverdue = nextDue < todayStr && loan.status === 'active'
                   const isDueToday = nextDue === todayStr && loan.status === 'active'
-                  const profit = Math.max(0, loan.total_expected - loan.principal)
 
                   return (
                     <tr key={loan.id}>
@@ -111,37 +123,33 @@ export function WeeklyPage({ onOpenNewLoan }: Props) {
                           {loan.customer_name}
                         </Link>
                       </td>
-                      <td>
-                        <span className="sheet-badge">#{loan.main_sheet_no}</span>
-                      </td>
                       <td>{loan.loan_date}</td>
-                      <td className="amount-cell">{currency.format(loan.principal)}</td>
-                      <td className="amount-cell">{currency.format(loan.weekly_payment)}</td>
-                      <td className="amount-cell">{currency.format(loan.total_expected)}</td>
-                      <td>{weeksPaid} / 10</td>
-                      <td>{weeksRemaining} wks</td>
+                      <td className="amount-cell">{currency.format(loan.weekly_payment || 3000)}</td>
                       <td>
                         <span className={`due-tag ${isOverdue ? 'overdue' : isDueToday ? 'due-today' : 'upcoming'}`}>
                           {nextDue}
                         </span>
                       </td>
-                      <td className="amount-cell">{currency.format(loan.total_collected)}</td>
-                      <td className="amount-cell">{currency.format(loan.remaining_balance)}</td>
-                      <td className="amount-cell text-success">{currency.format(profit)}</td>
+                      <td>{weeksPaid} / 10</td>
                       <td>
                         <span className={`status-badge ${loan.status}`}>{loan.status.toUpperCase()}</span>
                       </td>
                       <td>
-                        <button
-                          type="button"
-                          className="secondary-button compact-button"
-                          onClick={() => {
-                            setSelectedLoan(loan)
-                            setShowPayModal(true)
-                          }}
-                        >
-                          Mark Paid
-                        </button>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button
+                            type="button"
+                            className="secondary-button compact-button"
+                            onClick={() => {
+                              setSelectedLoan(loan)
+                              setShowPayModal(true)
+                            }}
+                          >
+                            Mark Paid
+                          </button>
+                          <Link to={`/borrower/${loan.id}`} className="secondary-button compact-button">
+                            View
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -166,3 +174,4 @@ export function WeeklyPage({ onOpenNewLoan }: Props) {
     </>
   )
 }
+
