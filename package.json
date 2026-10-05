@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "import:excel": "tsx scripts/import-excel.ts",
+    "seed:supabase": "tsx scripts/seed-supabase.ts",
     "preview": "vite preview",
     "test": "vitest run",
     "verify:import": "vitest run scripts/import-excel.test.ts"
