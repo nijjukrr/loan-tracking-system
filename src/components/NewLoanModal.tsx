@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { financeApi } from '../lib/financeApi'
 import { formatDateISO } from '../lib/financeLogic'
-import type { ModeKind, NewLoanInput } from '../types'
+import type { Customer, ModeKind, NewLoanInput } from '../types'
 
 type Props = {
   isOpen: boolean
@@ -13,26 +13,46 @@ type Props = {
 export function NewLoanModal({ isOpen, onClose, onSuccess }: Props) {
   const [mode, setMode] = useState<ModeKind>('D')
   const [customerName, setCustomerName] = useState('')
+  const [matchingPeople, setMatchingPeople] = useState<Customer[]>([])
+  const [selectedPerson, setSelectedPerson] = useState<Customer | null>(null)
+  const [createSeparate, setCreateSeparate] = useState(false)
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
   const [loanDate, setLoanDate] = useState(formatDateISO(new Date()))
   const [principal, setPrincipal] = useState<number>(10000)
   const [interestAmount, setInterestAmount] = useState<number>(300)
   const [weeklyPayment, setWeeklyPayment] = useState<number>(3000)
+  const [totalReturn, setTotalReturn] = useState<number>(30000)
   const [firstDueDate, setFirstDueDate] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const query = customerName.trim()
+    if (query.length < 2 || selectedPerson || createSeparate) {
+      setMatchingPeople([])
+      return
+    }
+    const timer = window.setTimeout(() => {
+      void financeApi.listPeople(query).then(setMatchingPeople).catch(() => setMatchingPeople([]))
+    }, 200)
+    return () => window.clearTimeout(timer)
+  }, [customerName, selectedPerson, createSeparate])
 
   if (!isOpen) return null
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (!customerName.trim()) {
-      setError('Customer name is required.')
+      setError('Person name is required.')
       return
     }
     if (!principal || principal <= 0) {
       setError('Enter a valid principal amount.')
+      return
+    }
+    if (matchingPeople.length > 0 && !selectedPerson && !createSeparate) {
+      setError('Choose an existing Person or confirm Create Separate Person.')
       return
     }
 
@@ -41,6 +61,7 @@ export function NewLoanModal({ isOpen, onClose, onSuccess }: Props) {
 
     try {
       const input: NewLoanInput = {
+        customer_id: selectedPerson?.id,
         customer_name: customerName.trim(),
         phone: phone.trim() || undefined,
         address: address.trim() || undefined,
@@ -49,6 +70,7 @@ export function NewLoanModal({ isOpen, onClose, onSuccess }: Props) {
         principal: Number(principal),
         interest_amount: mode === 'D' ? Number(interestAmount) : undefined,
         weekly_payment: mode === 'W' ? Number(weeklyPayment) : undefined,
+        total_return: mode === 'W' ? Number(totalReturn) : undefined,
         first_due_date: firstDueDate || undefined,
       }
       await financeApi.createLoan(input)
@@ -85,7 +107,6 @@ export function NewLoanModal({ isOpen, onClose, onSuccess }: Props) {
                 className={`tab-btn ${mode === 'D' ? 'active' : ''}`}
                 onClick={() => {
                   setMode('D')
-                  setInterestAmount(Math.round(principal * 0.03))
                 }}
               >
                 Daily (10-Day Cycle)
@@ -95,7 +116,9 @@ export function NewLoanModal({ isOpen, onClose, onSuccess }: Props) {
                 className={`tab-btn ${mode === 'W' ? 'active' : ''}`}
                 onClick={() => {
                   setMode('W')
-                  setWeeklyPayment(3000)
+                  const suggestedReturn = Math.round((principal * 10) / 9)
+                  setTotalReturn(suggestedReturn)
+                  setWeeklyPayment(Math.round(suggestedReturn / 10))
                 }}
               >
                 Weekly (10 Weeks)
@@ -104,14 +127,46 @@ export function NewLoanModal({ isOpen, onClose, onSuccess }: Props) {
           </label>
 
           <label>
-            Customer Name *
+            Person Name *
             <input
               required
               value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
+              onChange={(e) => {
+                setCustomerName(e.target.value)
+                setSelectedPerson(null)
+                setCreateSeparate(false)
+              }}
               placeholder="e.g. YUVARAJ-DMK"
             />
           </label>
+
+          {matchingPeople.length > 0 && (
+            <div className="person-match-panel full-span">
+              <strong>Similar Person found</strong>
+              <p>Names can have separate accounts. Choose explicitly so records are never merged by mistake.</p>
+              {matchingPeople.map((person) => (
+                <button key={person.id} type="button" className="secondary-button" onClick={() => {
+                  setSelectedPerson(person)
+                  setCustomerName(person.name)
+                  setPhone(person.phone || '')
+                  setAddress(person.address || '')
+                  setMatchingPeople([])
+                }}>
+                  Use Existing Person · {person.name}{person.phone ? ` · ${person.phone}` : ''}
+                </button>
+              ))}
+              <button type="button" className="secondary-button" onClick={() => {
+                setCreateSeparate(true)
+                setMatchingPeople([])
+              }}>Create Separate Person</button>
+            </div>
+          )}
+
+          {(selectedPerson || createSeparate) && (
+            <p className="selection-confirmation full-span">
+              {selectedPerson ? `Using existing Person: ${selectedPerson.name}` : 'A separate Person record will be created.'}
+            </p>
+          )}
 
           <label>
             Phone Number <span className="optional">Optional</span>
@@ -134,7 +189,6 @@ export function NewLoanModal({ isOpen, onClose, onSuccess }: Props) {
               onChange={(e) => {
                 const val = Number(e.target.value)
                 setPrincipal(val)
-                if (mode === 'D') setInterestAmount(Math.round(val * 0.03))
               }}
             />
           </label>
@@ -151,16 +205,17 @@ export function NewLoanModal({ isOpen, onClose, onSuccess }: Props) {
               />
             </label>
           ) : (
-            <label>
-              Weekly Payment Amount (₹) *
-              <input
-                type="number"
-                required
-                min="100"
-                value={weeklyPayment}
-                onChange={(e) => setWeeklyPayment(Number(e.target.value))}
-              />
-            </label>
+            <>
+              <label>
+                Total Return (₹) *
+                <input type="number" required min={principal} value={totalReturn} onChange={(e) => setTotalReturn(Number(e.target.value))} />
+              </label>
+              <label>
+                Weekly Payment Amount (₹) *
+                <input type="number" required min="1" value={weeklyPayment} onChange={(e) => setWeeklyPayment(Number(e.target.value))} />
+              </label>
+              <p className="field-help full-span">Suggested standard plan: ₹{Math.round((principal * 10) / 9).toLocaleString('en-IN')} total · ₹{Math.round(principal / 9).toLocaleString('en-IN')} × 10. You can override both amounts.</p>
+            </>
           )}
 
           <label>

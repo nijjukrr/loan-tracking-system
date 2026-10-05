@@ -108,7 +108,7 @@ describe('financeLogic business rules', () => {
     ]
 
     expect(calculateDailyProfit(weeklyPayments)).toBe(300)
-    expect(calculateWeeklyRealizedProfit(loans, weeklyPayments)).toBe(300)
+    expect(calculateWeeklyRealizedProfit(loans, weeklyPayments)).toBe(0)
     expect(calculateTenPercentProfit(tenPercentEntries)).toBe(500)
 
     const metrics = computeDashboardMetrics(loans, [], weeklyPayments, tenPercentEntries, '2026-10-05')
@@ -116,7 +116,29 @@ describe('financeLogic business rules', () => {
     expect(metrics.weeklyMoneyLent).toBe(27000)
     expect(metrics.totalMoneyLent).toBe(27000)
     expect(metrics.totalCollected).toBe(3300)
-    expect(metrics.totalProfit).toBe(1100)
+    expect(metrics.totalProfit).toBe(800)
+  })
+
+  it('recognizes Weekly profit only after the account is closed', () => {
+    const loan: Loan = {
+      id: 'weekly-closed', customer_name: 'TEST WEEKLY', main_sheet_no: 20, mode: 'W',
+      loan_date: '2026-10-01', principal: 27000, interest_amount: 0, weekly_payment: 3000,
+      total_expected: 30000, total_collected: 30000, remaining_balance: 0, status: 'active',
+      created_at: '2026-10-01T00:00:00Z', updated_at: '2026-10-01T00:00:00Z',
+    }
+    expect(calculateWeeklyRealizedProfit([loan], [])).toBe(0)
+    expect(calculateWeeklyRealizedProfit([{ ...loan, status: 'closed' }], [])).toBe(3000)
+  })
+
+  it('counts Money Given only for active accounts', () => {
+    const base: Loan = {
+      id: 'd1', customer_name: 'TEST DAILY', main_sheet_no: 1, mode: 'D', loan_date: '2026-10-01',
+      principal: 10000, interest_amount: 500, weekly_payment: 0, total_expected: 13000,
+      total_collected: 0, remaining_balance: 13000, status: 'active',
+      created_at: '2026-10-01T00:00:00Z', updated_at: '2026-10-01T00:00:00Z',
+    }
+    const metrics = computeDashboardMetrics([base, { ...base, id: 'd2', status: 'closed' }], [], [], [])
+    expect(metrics.dailyMoneyLent).toBe(10000)
   })
 
   it('validates 10% entry fields', () => {

@@ -75,7 +75,7 @@ export function WeeklyPage({ onOpenNewLoan }: Props) {
       <section className="search-bar-card">
         <input
           type="search"
-          placeholder="Search weekly loans by customer name…"
+          placeholder="Search weekly loans by Person name…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -174,4 +174,3 @@ export function WeeklyPage({ onOpenNewLoan }: Props) {
     </>
   )
 }
-

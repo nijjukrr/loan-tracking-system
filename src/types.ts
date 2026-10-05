@@ -1,7 +1,7 @@
 export type ModeKind = 'D' | 'W'
 export type LoanStatus = 'active' | 'closed'
 export type InstallmentStatus = 'Upcoming' | 'Due Today' | 'Paid' | 'Partial' | 'Overdue'
-export type PaymentType = 'Interest' | 'Weekly Installment' | 'Principal' | 'Partial' | 'Other'
+export type PaymentType = 'Interest' | 'Weekly Installment' | 'Principal' | 'Interest + Principal' | 'Partial' | 'Other'
 
 export type Customer = {
   id: string
@@ -104,6 +104,7 @@ export type DashboardMetrics = {
 }
 
 export type NewLoanInput = {
+  customer_id?: string
   customer_name: string
   phone?: string
   address?: string
@@ -112,6 +113,7 @@ export type NewLoanInput = {
   principal: number
   interest_amount?: number
   weekly_payment?: number
+  total_return?: number
   first_due_date?: string
   main_sheet_no?: number
 }

@@ -158,7 +158,7 @@ export function BorrowerDetailPage() {
         <h3>Borrower Account Summary</h3>
         <div className="info-grid">
           <div>
-            <span>Customer Name</span>
+            <span>Person Name</span>
             <strong>{loan.customer_name}</strong>
           </div>
           <div>

@@ -75,7 +75,7 @@ export function DailyPage({ onOpenNewLoan }: Props) {
       <section className="search-bar-card">
         <input
           type="search"
-          placeholder="Search by customer name…"
+          placeholder="Search by Person name…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -171,4 +171,3 @@ export function DailyPage({ onOpenNewLoan }: Props) {
     </>
   )
 }
-

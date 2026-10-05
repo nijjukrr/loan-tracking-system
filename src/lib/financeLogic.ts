@@ -114,27 +114,20 @@ export function generateWeeklyInstallments(
 
 export function calculateDailyProfit(payments: Payment[]): number {
   return payments
-    .filter((p) => p.mode === 'D' && (p.payment_type === 'Interest' || p.payment_type === 'Partial' || p.payment_type === 'Other'))
+    .filter((p) => p.mode === 'D' && p.payment_type === 'Interest')
     .reduce((sum, p) => sum + p.amount, 0)
 }
 
-export function calculateWeeklyRealizedProfit(loans: Loan[], payments: Payment[]): number {
+export function calculateWeeklyRealizedProfit(loans: Loan[], _payments: Payment[]): number {
   let profit = 0
   for (const loan of loans) {
     if (loan.mode !== 'W') continue
-    const loanPayments = payments.filter((p) => p.loan_id === loan.id)
-    const totalCollected = loanPayments.reduce((sum, p) => sum + p.amount, 0)
-    
-    // For weekly loans, weekly payment is typically principal + interest component (e.g. 27k principal, 30k total expected -> 3k profit over 10 wks)
+    // Weekly profit is recognized only after the account is explicitly closed.
     // Realized profit per installment = (total_expected - principal) / 10 * paid_installments or excess over principal
     const totalExpected = loan.total_expected || (loan.principal + (loan.weekly_payment * 10 - loan.principal))
     const expectedProfit = Math.max(0, totalExpected - loan.principal)
-    if (loan.status === 'closed' || totalCollected >= totalExpected) {
+    if (loan.status === 'closed') {
       profit += expectedProfit
-    } else {
-      // Proportional realized profit based on collections
-      const ratio = totalExpected > 0 ? totalCollected / totalExpected : 0
-      profit += Math.round(expectedProfit * ratio)
     }
   }
   return profit
@@ -176,8 +169,8 @@ export function computeDashboardMetrics(
   const dailyLoans = loans.filter((l) => l.mode === 'D')
   const weeklyLoans = loans.filter((l) => l.mode === 'W')
 
-  const dailyMoneyLent = dailyLoans.reduce((sum, l) => sum + l.principal, 0)
-  const weeklyMoneyLent = weeklyLoans.reduce((sum, l) => sum + l.principal, 0)
+  const dailyMoneyLent = dailyLoans.filter((l) => l.status === 'active').reduce((sum, l) => sum + l.principal, 0)
+  const weeklyMoneyLent = weeklyLoans.filter((l) => l.status === 'active').reduce((sum, l) => sum + l.principal, 0)
   const totalMoneyLent = dailyMoneyLent + weeklyMoneyLent
 
   const totalCollected = payments.reduce((sum, p) => sum + p.amount, 0)

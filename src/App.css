@@ -904,3 +904,23 @@ select:focus {
     align-items: flex-start;
   }
 }
+.person-match-panel {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: #eff6ff;
+}
+
+.person-match-panel p,
+.selection-confirmation,
+.field-help {
+  margin: 0;
+  color: #475569;
+  font-size: 0.875rem;
+}
+
+.person-match-panel .secondary-button {
+  justify-content: flex-start;
+}

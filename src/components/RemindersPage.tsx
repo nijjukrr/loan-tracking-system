@@ -87,7 +87,7 @@ export function RemindersPage() {
                 <table>
                   <thead>
                     <tr>
-                      <th>Customer Name</th>
+                      <th>Person Name</th>
                       <th>Mode</th>
                       <th>Main Sheet No</th>
                       <th className="amount-cell">Principal</th>
@@ -152,7 +152,7 @@ export function RemindersPage() {
                 <table>
                   <thead>
                     <tr>
-                      <th>Customer Name</th>
+                      <th>Person Name</th>
                       <th>Mode</th>
                       <th>Original Due Date</th>
                       <th>Days Overdue</th>
@@ -222,7 +222,7 @@ export function RemindersPage() {
                 <table>
                   <thead>
                     <tr>
-                      <th>Customer Name</th>
+                      <th>Person Name</th>
                       <th>Mode</th>
                       <th>Due Date</th>
                       <th>Days Until Due</th>

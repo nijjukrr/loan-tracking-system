@@ -58,7 +58,7 @@ export function PaymentsPage() {
       <section className="search-bar-card filters-row">
         <input
           type="search"
-          placeholder="Search by customer name or Main Sheet No…"
+          placeholder="Search by Person name…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -100,7 +100,7 @@ export function PaymentsPage() {
               <thead>
                 <tr>
                   <th>Payment ID</th>
-                  <th>Customer Name</th>
+                  <th>Person Name</th>
                   <th>Mode</th>
                   <th>Main Sheet No</th>
                   <th>Payment Date</th>

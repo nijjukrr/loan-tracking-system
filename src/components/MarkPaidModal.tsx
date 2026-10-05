@@ -121,6 +121,7 @@ export function MarkPaidModal({ isOpen, onClose, onSuccess, loan, installment }:
               <option value="Interest">Interest</option>
               <option value="Weekly Installment">Weekly Installment</option>
               <option value="Principal">Principal</option>
+              <option value="Interest + Principal">Interest + Principal</option>
               <option value="Partial">Partial</option>
               <option value="Other">Other</option>
             </select>

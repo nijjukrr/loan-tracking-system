@@ -38,7 +38,7 @@ export function ClosedAccountsPage() {
       <section className="search-bar-card">
         <input
           type="search"
-          placeholder="Search closed accounts by customer or Main Sheet No…"
+          placeholder="Search closed accounts by Person…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -61,7 +61,7 @@ export function ClosedAccountsPage() {
             <table>
               <thead>
                 <tr>
-                  <th>Customer Name</th>
+                  <th>Person Name</th>
                   <th>Mode</th>
                   <th>Main Sheet No</th>
                   <th className="amount-cell">Principal</th>

@@ -53,7 +53,7 @@ export function ActiveAccountsPage({ onOpenNewLoan }: Props) {
       <section className="search-bar-card filters-row">
         <input
           type="search"
-          placeholder="Search active accounts by customer or Main Sheet No…"
+          placeholder="Search active accounts by Person…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -82,7 +82,7 @@ export function ActiveAccountsPage({ onOpenNewLoan }: Props) {
             <table>
               <thead>
                 <tr>
-                  <th>Customer Name</th>
+                  <th>Person Name</th>
                   <th>Mode</th>
                   <th>Main Sheet No</th>
                   <th className="amount-cell">Principal</th>

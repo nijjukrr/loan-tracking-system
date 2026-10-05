@@ -165,7 +165,7 @@ export function DashboardPage({ onOpenNewLoan }: Props) {
               <table>
                 <thead>
                   <tr>
-                    <th>Customer Name</th>
+                    <th>Person Name</th>
                     <th>Mode</th>
                     <th>Main Sheet No</th>
                     <th>Loan Date</th>
@@ -207,4 +207,3 @@ export function DashboardPage({ onOpenNewLoan }: Props) {
     </>
   )
 }
-
