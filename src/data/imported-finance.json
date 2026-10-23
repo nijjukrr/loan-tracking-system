@@ -26,6 +26,12 @@
     "tenPercentCount": 20,
     "tenPercentProfit": 161010
   },
+  "ledgerSummary": {
+    "cashInBank": 20150,
+    "loanReceived": 40000,
+    "outstanding": 166150,
+    "creditGrandTotal": 206150
+  },
   "mainTransactions": [
     {
       "sourceKey": "nijju2026.xlsx:1",
@@ -356,7 +362,8 @@
       "loanDate": "2026-09-21",
       "principal": 10000,
       "sourceCredit": 0,
-      "sourceRemarks": "01-10-2026 INT RECD"
+      "sourceRemarks": "01-10-2026 INT RECD",
+      "cleared": false
     },
     {
       "sourceKey": "nijju2026.xlsx:4",
@@ -366,7 +373,8 @@
       "loanDate": "2026-09-21",
       "principal": 10000,
       "sourceCredit": 0,
-      "sourceRemarks": null
+      "sourceRemarks": null,
+      "cleared": false
     },
     {
       "sourceKey": "nijju2026.xlsx:8",
@@ -376,7 +384,8 @@
       "loanDate": "2026-09-22",
       "principal": 15000,
       "sourceCredit": 0,
-      "sourceRemarks": null
+      "sourceRemarks": null,
+      "cleared": false
     },
     {
       "sourceKey": "nijju2026.xlsx:14",
@@ -386,7 +395,8 @@
       "loanDate": "2026-09-27",
       "principal": 27000,
       "sourceCredit": 0,
-      "sourceRemarks": null
+      "sourceRemarks": null,
+      "cleared": false
     },
     {
       "sourceKey": "nijju2026.xlsx:15",
@@ -396,7 +406,8 @@
       "loanDate": "2026-09-28",
       "principal": 10000,
       "sourceCredit": 10000,
-      "sourceRemarks": "3/10/26 AMT RECD"
+      "sourceRemarks": "3/10/26 AMT RECD",
+      "cleared": true
     },
     {
       "sourceKey": "nijju2026.xlsx:23",
@@ -406,7 +417,8 @@
       "loanDate": "2026-10-01",
       "principal": 10000,
       "sourceCredit": 90,
-      "sourceRemarks": null
+      "sourceRemarks": null,
+      "cleared": false
     },
     {
       "sourceKey": "nijju2026.xlsx:24",
@@ -416,7 +428,8 @@
       "loanDate": "2026-10-01",
       "principal": 40000,
       "sourceCredit": 0,
-      "sourceRemarks": null
+      "sourceRemarks": null,
+      "cleared": false
     },
     {
       "sourceKey": "nijju2026.xlsx:25",
@@ -426,7 +439,8 @@
       "loanDate": "2026-10-02",
       "principal": 10000,
       "sourceCredit": 60,
-      "sourceRemarks": null
+      "sourceRemarks": null,
+      "cleared": false
     },
     {
       "sourceKey": "nijju2026.xlsx:29",
@@ -436,7 +450,8 @@
       "loanDate": "2026-10-04",
       "principal": 20000,
       "sourceCredit": 0,
-      "sourceRemarks": null
+      "sourceRemarks": null,
+      "cleared": false
     }
   ],
   "tenPercentEntries": [

@@ -71,7 +71,7 @@ async function seedSupabase() {
       totalExpected = 30000
     }
 
-    const isClosed = sourceCredit >= principal && remarks.includes('AMT RECD')
+    const isClosed = Boolean(raw.cleared) || (sourceCredit >= principal && remarks.includes('AMT RECD'))
     const status = isClosed ? 'closed' : 'active'
     const totalCollected = sourceCredit
 

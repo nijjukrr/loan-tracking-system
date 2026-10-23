@@ -57,7 +57,7 @@ function buildInitialData() {
 
   rawLoans.forEach((raw) => {
 
-    const loanId = `loan-${raw.mainSheetNo}`
+    const loanId = `loan-${raw.mainSheetNo}-${raw.sourceKey ? String(raw.sourceKey).replace(/[^a-zA-Z0-9-]/g, '-') : 'import'}`
     const isDaily = raw.mode === 'D'
     const principal = Number(raw.principal)
     const sourceCredit = Number(raw.sourceCredit || 0)
@@ -75,7 +75,7 @@ function buildInitialData() {
       totalExpected = 30000
     }
 
-    const isClosed = sourceCredit >= principal && remarks.includes('AMT RECD')
+    const isClosed = Boolean(raw.cleared) || (sourceCredit >= principal && remarks.includes('AMT RECD'))
     const status = isClosed ? 'closed' : 'active'
     const totalCollected = sourceCredit
 
@@ -94,6 +94,7 @@ function buildInitialData() {
       status,
       closed_at: isClosed ? raw.loanDate : null,
       source_remarks: remarks || null,
+      source_paid: isClosed,
       created_at: new Date(raw.loanDate).toISOString(),
       updated_at: new Date().toISOString(),
     }

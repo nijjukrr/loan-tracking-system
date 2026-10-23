@@ -27,6 +27,8 @@ export type Loan = {
   status: LoanStatus
   closed_at?: string | null
   source_remarks?: string | null
+  /** True when the source ledger marks this individual debit row green/paid. */
+  source_paid?: boolean
   created_at: string
   updated_at: string
 }
@@ -101,6 +103,10 @@ export type DashboardMetrics = {
   closedAccounts: number
   dueTodayCount: number
   overdueCount: number
+  loanReceived: number
+  cashInBank: number
+  outstanding: number
+  creditGrandTotal: number
 }
 
 export type NewLoanInput = {

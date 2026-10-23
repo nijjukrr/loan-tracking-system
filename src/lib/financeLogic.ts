@@ -7,6 +7,7 @@ import type {
   Payment,
   TenPercentEntry,
 } from '../types'
+import importedData from '../data/imported-finance.json'
 
 export function formatDateISO(date: Date): string {
   return date.toISOString().slice(0, 10)
@@ -166,6 +167,7 @@ export function computeDashboardMetrics(
   tenPercentEntries: TenPercentEntry[],
   todayStr: string = formatDateISO(new Date())
 ): DashboardMetrics {
+  const importedSummary = importedData.ledgerSummary
   const dailyLoans = loans.filter((l) => l.mode === 'D')
   const weeklyLoans = loans.filter((l) => l.mode === 'W')
 
@@ -204,5 +206,9 @@ export function computeDashboardMetrics(
     closedAccounts,
     dueTodayCount,
     overdueCount,
+    loanReceived: importedSummary.loanReceived,
+    cashInBank: importedSummary.cashInBank,
+    outstanding: importedSummary.outstanding,
+    creditGrandTotal: importedSummary.creditGrandTotal,
   }
 }
