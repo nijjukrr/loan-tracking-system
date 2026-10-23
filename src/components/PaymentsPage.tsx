@@ -17,13 +17,19 @@ export function PaymentsPage() {
   const [endDate, setEndDate] = useState('')
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc'>('date-desc')
 
+  const [error, setError] = useState('')
+
   const loadData = useCallback(() => {
     setLoading(true)
+    setError('')
     const mode = modeFilter === 'ALL' ? undefined : modeFilter
     financeApi
       .listPayments({ mode })
       .then((data) => setPayments(data))
-      .catch((err) => console.error(err))
+      .catch((err) => {
+        console.error('Payments load error:', err)
+        setError(err instanceof Error ? err.message : 'Failed to query payment ledger.')
+      })
       .finally(() => setLoading(false))
   }, [modeFilter])
 
@@ -203,12 +209,33 @@ export function PaymentsPage() {
           </div>
         </div>
 
+        {error && (
+          <div className="card" style={{ marginBottom: '1rem', background: '#fef2f2', borderLeft: '4px solid #ef4444' }}>
+            <strong>Error querying payments:</strong> {error}
+            <button className="secondary-button compact-button" style={{ marginLeft: '1rem' }} onClick={loadData}>
+              Retry
+            </button>
+          </div>
+        )}
+
         {loading ? (
           <div className="loading-state">Loading payment records…</div>
         ) : filteredPayments.length === 0 ? (
-          <div className="empty-state">
-            <strong>No payments found matching criteria</strong>
-            <p style={{ margin: '0.25rem 0 0', fontSize: '0.8125rem', color: 'var(--muted)' }}>Try resetting filters or adjusting search keywords.</p>
+          <div className="empty-state" style={{ padding: '2.5rem 1.5rem', textAlign: 'center' }}>
+            {payments.length === 0 ? (
+              <>
+                <strong style={{ fontSize: '1.0625rem', color: 'var(--text)' }}>No Historical Payment Receipts in Source Workbook</strong>
+                <p style={{ margin: '0.5rem auto 0', maxWidth: '520px', fontSize: '0.875rem', color: 'var(--muted)', lineHeight: '1.5' }}>
+                  The source workbook (<em>NISHANTH-2026.xlsx</em>) contains loan ledger disbursements and interest/profit ledgers, but no borrower collection receipt vouchers.
+                  New payments recorded via Daily/Weekly loan actions or borrower timeline will appear here immediately with verified principal and interest allocations.
+                </p>
+              </>
+            ) : (
+              <>
+                <strong>No payments found matching criteria</strong>
+                <p style={{ margin: '0.25rem 0 0', fontSize: '0.8125rem', color: 'var(--muted)' }}>Try resetting filters or adjusting search keywords.</p>
+              </>
+            )}
           </div>
         ) : (
           <div className="table-responsive">
