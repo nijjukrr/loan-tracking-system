@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { financeApi } from '../lib/financeApi'
 import { formatDateISO } from '../lib/financeLogic'
+import { DomainValidationError, validateNewLoanInput } from '../lib/domainValidators'
 import type { Customer, ModeKind, NewLoanInput } from '../types'
 
 type Props = {
@@ -13,6 +14,7 @@ type Props = {
 export function NewLoanModal({ isOpen, onClose, onSuccess }: Props) {
   const [mode, setMode] = useState<ModeKind>('D')
   const [customerName, setCustomerName] = useState('')
+  const [acNo, setAcNo] = useState('')
   const [matchingPeople, setMatchingPeople] = useState<Customer[]>([])
   const [selectedPerson, setSelectedPerson] = useState<Customer | null>(null)
   const [createSeparate, setCreateSeparate] = useState(false)
@@ -41,16 +43,21 @@ export function NewLoanModal({ isOpen, onClose, onSuccess }: Props) {
 
   if (!isOpen) return null
 
+  const handlePrincipalChange = (val: number) => {
+    setPrincipal(val)
+    if (mode === 'D') {
+      setInterestAmount(Math.round(val * 0.03))
+    } else {
+      const suggestedReturn = Math.round((val * 10) / 9)
+      setTotalReturn(suggestedReturn)
+      setWeeklyPayment(Math.round(suggestedReturn / 10))
+    }
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!customerName.trim()) {
-      setError('Person name is required.')
-      return
-    }
-    if (!principal || principal <= 0) {
-      setError('Enter a valid principal amount.')
-      return
-    }
+    if (saving) return // Idempotency protection against double clicks
+
     if (matchingPeople.length > 0 && !selectedPerson && !createSeparate) {
       setError('Choose an existing Person or confirm Create Separate Person.')
       return
@@ -72,12 +79,19 @@ export function NewLoanModal({ isOpen, onClose, onSuccess }: Props) {
         weekly_payment: mode === 'W' ? Number(weeklyPayment) : undefined,
         total_return: mode === 'W' ? Number(totalReturn) : undefined,
         first_due_date: firstDueDate || undefined,
+        main_sheet_no: acNo.trim() ? Number(acNo) : undefined,
+        ac_no: acNo.trim() ? Number(acNo) : undefined,
       }
+      validateNewLoanInput(input)
       await financeApi.createLoan(input)
       onSuccess()
       onClose()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Unable to create loan.')
+      if (err instanceof DomainValidationError) {
+        setError(`Validation error (${err.field}): ${err.message}`)
+      } else {
+        setError(err instanceof Error ? err.message : 'Unable to create loan.')
+      }
     } finally {
       setSaving(false)
     }
@@ -169,6 +183,16 @@ export function NewLoanModal({ isOpen, onClose, onSuccess }: Props) {
           )}
 
           <label>
+            Account / Sheet No <span className="optional">Optional</span>
+            <input
+              type="number"
+              value={acNo}
+              onChange={(e) => setAcNo(e.target.value)}
+              placeholder="e.g. 101 (auto if blank)"
+            />
+          </label>
+
+          <label>
             Phone Number <span className="optional">Optional</span>
             <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. 9876543210" />
           </label>
@@ -186,10 +210,7 @@ export function NewLoanModal({ isOpen, onClose, onSuccess }: Props) {
               min="500"
               step="500"
               value={principal}
-              onChange={(e) => {
-                const val = Number(e.target.value)
-                setPrincipal(val)
-              }}
+              onChange={(e) => handlePrincipalChange(Number(e.target.value))}
             />
           </label>
 
