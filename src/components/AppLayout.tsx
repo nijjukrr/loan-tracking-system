@@ -101,6 +101,14 @@ export function AppLayout({ onSignOut, onOpenNewLoan }: Props) {
 
           <NavLink
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+            to="/borrowers"
+            onClick={closeMenu}
+          >
+            <span>👥</span> Borrowers
+          </NavLink>
+
+          <NavLink
+            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
             to="/closed-accounts"
             onClick={closeMenu}
           >

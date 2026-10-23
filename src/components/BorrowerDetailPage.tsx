@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { financeApi } from '../lib/financeApi'
 import { calculateNextDueDate } from '../lib/financeLogic'
-import type { Installment, Loan, Payment } from '../types'
+import type { DueReceivableEntry, Installment, Loan, Payment } from '../types'
 import { MarkPaidModal } from './MarkPaidModal'
 
 const currency = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })
@@ -13,6 +13,8 @@ export function BorrowerDetailPage() {
   const [loan, setLoan] = useState<Loan | null>(null)
   const [installments, setInstallments] = useState<Installment[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
+  const [relatedLoans, setRelatedLoans] = useState<Loan[]>([])
+  const [relatedDues, setRelatedDues] = useState<DueReceivableEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showPayModal, setShowPayModal] = useState(false)
@@ -23,11 +25,27 @@ export function BorrowerDetailPage() {
     setLoading(true)
     financeApi
       .getLoanDetail(id)
-      .then((res) => {
+      .then(async (res) => {
         if (res) {
           setLoan(res.loan)
           setInstallments(res.installments)
           setPayments(res.payments)
+          try {
+            const [allLoans, allDues] = await Promise.all([
+              financeApi.listLoans(),
+              financeApi.listDues(),
+            ])
+            const other = allLoans.filter(
+              (l) => l.customer_name.toLowerCase() === res.loan.customer_name.toLowerCase() && l.id !== res.loan.id
+            )
+            const dues = allDues.filter(
+              (d) => d.borrower_name.toLowerCase() === res.loan.customer_name.toLowerCase()
+            )
+            setRelatedLoans(other)
+            setRelatedDues(dues)
+          } catch {
+            // Non-fatal
+          }
         } else {
           setError('Borrower account not found.')
         }
@@ -60,6 +78,19 @@ export function BorrowerDetailPage() {
       navigate(loan.mode === 'D' ? '/daily' : '/weekly', { replace: true })
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Unable to delete account.')
+    }
+  }
+
+  async function handleSettleDue(dueId: string, remaining: number) {
+    const amountStr = window.prompt(`Enter amount to settle for this due (Remaining: ₹${remaining.toLocaleString('en-IN')}):`, String(remaining))
+    if (!amountStr) return
+    const amt = Number(amountStr)
+    if (isNaN(amt) || amt <= 0) return
+    try {
+      await financeApi.settleDue(dueId, amt)
+      loadData()
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to settle due')
     }
   }
 
@@ -292,6 +323,111 @@ export function BorrowerDetailPage() {
           </div>
         )}
       </section>
+
+      {/* Other Accounts for this Borrower */}
+      {relatedLoans.length > 0 && (
+        <section className="table-card" style={{ marginTop: '1.5rem' }}>
+          <div className="table-heading">
+            <div>
+              <h2>Other Accounts for {loan.customer_name} ({relatedLoans.length})</h2>
+              <p>Borrower portfolio holding multiple loan accounts</p>
+            </div>
+          </div>
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Account #</th>
+                  <th>Mode</th>
+                  <th>Loan Date</th>
+                  <th className="amount-cell">Principal</th>
+                  <th className="amount-cell">Remaining</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {relatedLoans.map((rl) => (
+                  <tr key={rl.id}>
+                    <td>#{rl.main_sheet_no}</td>
+                    <td>{rl.mode === 'D' ? 'Daily (10-Day)' : 'Weekly (10-Wk)'}</td>
+                    <td>{rl.loan_date}</td>
+                    <td className="amount-cell">{currency.format(rl.principal)}</td>
+                    <td className="amount-cell" style={{ color: rl.remaining_balance > 0 ? 'var(--warning)' : 'inherit' }}>
+                      {currency.format(rl.remaining_balance)}
+                    </td>
+                    <td>
+                      <span className={`pill ${rl.status === 'active' ? 'pill-green' : 'pill-gray'}`}>
+                        {rl.status === 'active' ? 'Active' : 'Closed'}
+                      </span>
+                    </td>
+                    <td>
+                      <Link to={`/borrower/${rl.id}`} className="button-secondary" style={{ padding: '3px 8px', fontSize: '0.75rem' }}>
+                        Open Account →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* Linked Unpaid Dues / Receivables */}
+      {relatedDues.length > 0 && (
+        <section className="table-card" style={{ marginTop: '1.5rem', borderLeft: '4px solid var(--danger)' }}>
+          <div className="table-heading">
+            <div>
+              <h2 style={{ color: 'var(--danger)' }}>Linked Customer Dues ({relatedDues.length})</h2>
+              <p>Uncollected dues / receivables linked to {loan.customer_name}</p>
+            </div>
+          </div>
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Due Date</th>
+                  <th className="amount-cell">Original Due</th>
+                  <th className="amount-cell">Remaining Due</th>
+                  <th>Status</th>
+                  <th>Notes</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {relatedDues.map((due) => (
+                  <tr key={due.id}>
+                    <td>{due.due_date}</td>
+                    <td className="amount-cell">{currency.format(due.amount)}</td>
+                    <td className="amount-cell" style={{ color: 'var(--danger)', fontWeight: 700 }}>
+                      {currency.format(due.remaining_amount)}
+                    </td>
+                    <td>
+                      <span className={`pill ${due.status === 'settled' ? 'pill-green' : due.status === 'partial' ? 'pill-gold' : 'pill-red'}`}>
+                        {due.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td>{due.notes || '—'}</td>
+                    <td>
+                      {due.remaining_amount > 0 && (
+                        <button
+                          type="button"
+                          className="button-secondary"
+                          style={{ padding: '3px 8px', fontSize: '0.75rem' }}
+                          onClick={() => handleSettleDue(due.id, due.remaining_amount)}
+                        >
+                          Settle Due
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {showPayModal && (
         <MarkPaidModal
