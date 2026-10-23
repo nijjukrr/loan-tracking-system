@@ -13,7 +13,8 @@
     "finance:clean-start": "tsx scripts/finance-data-admin.ts reset CLEAN_START",
     "preview": "vite preview",
     "test": "vitest run",
-    "verify:import": "vitest run scripts/import-excel.test.ts"
+    "verify:import": "vitest run scripts/import-excel.test.ts",
+    "verify:all": "oxlint && vitest run && tsc -b && vite build"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.117.2",
