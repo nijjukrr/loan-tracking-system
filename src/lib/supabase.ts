@@ -1,8 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim()
-const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim()
-const localOnly = import.meta.env.VITE_LOCAL_ONLY === 'true'
+const env = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : (typeof process !== 'undefined' ? process.env : {}) as Record<string, string | undefined>
+
+const supabaseUrl = env.VITE_SUPABASE_URL?.trim()
+const publishableKey = env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim()
+const localOnly = env.VITE_LOCAL_ONLY === 'true'
 
 export const isSupabaseConfigured = Boolean(!localOnly && supabaseUrl && publishableKey)
 

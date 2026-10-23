@@ -338,3 +338,75 @@ export type NewDueInput = {
   amount: number
   notes?: string
 }
+
+// Monthly Fund Types
+export type MonthlyFundMember = {
+  id: string
+  name: string
+  target_amount: number
+  total_collected: number
+  remaining_amount: number
+  status: 'active' | 'completed'
+  notes?: string | null
+  created_at: string
+}
+
+export type MonthlyFundCollection = {
+  id: string
+  member_id: string
+  member_name: string
+  collection_date: string
+  amount: number
+  note?: string | null
+  created_at: string
+}
+
+// Sweet Fund Types (50 members, 50 weeks)
+export type SweetFundProgramme = {
+  id: string
+  name: string
+  total_members: number
+  total_weeks: number
+  week_1_amount: number
+  week_regular_amount: number
+  target_per_member: number
+  total_target: number
+  start_date: string
+  target_end_date: string
+  is_active: boolean
+}
+
+export type SweetFundMember = {
+  id: string
+  programme_id: string
+  member_number: number
+  member_name: string
+  phone?: string | null
+  total_paid: number
+  remaining_balance: number
+  status: 'active' | 'completed'
+  created_at: string
+}
+
+export type SweetFundInstallment = {
+  id: string
+  member_id: string
+  week_number: number
+  due_date: string
+  expected_amount: number
+  paid_amount: number
+  status: 'Pending' | 'Paid' | 'Partial'
+  paid_date?: string | null
+}
+
+export type SweetFundPayment = {
+  id: string
+  member_id: string
+  member_name: string
+  installment_id: string
+  week_number: number
+  payment_date: string
+  amount: number
+  note?: string | null
+  created_at: string
+}

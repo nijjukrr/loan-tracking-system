@@ -29,6 +29,12 @@ import type {
   NewTenPercentEntry,
   Payment,
   TenPercentEntry,
+  MonthlyFundMember,
+  MonthlyFundCollection,
+  SweetFundProgramme,
+  SweetFundMember,
+  SweetFundInstallment,
+  SweetFundPayment,
 } from '../types'
 
 export interface FinanceApi {
@@ -73,6 +79,21 @@ export interface FinanceApi {
   settleDue(id: string, amount: number): Promise<DueReceivableEntry>
   deleteDue(id: string): Promise<void>
 
+  // Monthly Fund Management
+  listMonthlyFundMembers(): Promise<MonthlyFundMember[]>
+  addMonthlyFundMember(input: { name: string; target_amount: number; notes?: string }): Promise<MonthlyFundMember>
+  recordMonthlyFundCollection(input: { member_id: string; amount: number; date?: string; note?: string }): Promise<{ member: MonthlyFundMember; collection: MonthlyFundCollection }>
+  listMonthlyFundCollections(member_id?: string): Promise<MonthlyFundCollection[]>
+
+  // Sweet Fund Management (50 members, 50 weeks)
+  getSweetFundProgramme(): Promise<SweetFundProgramme>
+  updateSweetFundProgramme(update: Partial<SweetFundProgramme>): Promise<SweetFundProgramme>
+  listSweetFundMembers(): Promise<SweetFundMember[]>
+  addSweetFundMember(input: { member_name: string; phone?: string; member_number?: number }): Promise<SweetFundMember>
+  listSweetFundInstallments(member_id: string): Promise<SweetFundInstallment[]>
+  recordSweetFundPayment(input: { member_id: string; installment_id: string; amount: number; payment_date?: string; note?: string }): Promise<SweetFundPayment>
+  listSweetFundPayments(member_id?: string): Promise<SweetFundPayment[]>
+
   // Unified Ledger
   listLedgerTransactions(filter?: { category?: string }): Promise<FinancialLedgerTransaction[]>
 
@@ -86,17 +107,23 @@ export interface FinanceApi {
   clearAllData(): Promise<void>
 }
 
-const STORAGE_KEY_LOANS = 'finance-tracker-loans-v5'
-const STORAGE_KEY_INSTALLMENTS = 'finance-tracker-installments-v5'
-const STORAGE_KEY_PAYMENTS = 'finance-tracker-payments-v5'
-const STORAGE_KEY_TEN_PERCENT = 'finance-tracker-ten-percent-v5'
-const STORAGE_KEY_MAIN_TX = 'finance-tracker-main-tx-v5'
-const STORAGE_KEY_INVESTMENTS = 'finance-tracker-investments-v5'
-const STORAGE_KEY_INTERESTS = 'finance-tracker-interests-v5'
-const STORAGE_KEY_DUES = 'finance-tracker-dues-v5'
-const STORAGE_KEY_CUSTOMERS = 'finance-tracker-customers-v5'
-const STORAGE_KEY_LEDGER = 'finance-tracker-ledger-v5'
-const STORAGE_KEY_AUDIT = 'finance-tracker-audit-v5'
+const STORAGE_KEY_LOANS = 'finance-tracker-loans-v6'
+const STORAGE_KEY_INSTALLMENTS = 'finance-tracker-installments-v6'
+const STORAGE_KEY_PAYMENTS = 'finance-tracker-payments-v6'
+const STORAGE_KEY_TEN_PERCENT = 'finance-tracker-ten-percent-v6'
+const STORAGE_KEY_MAIN_TX = 'finance-tracker-main-tx-v6'
+const STORAGE_KEY_INVESTMENTS = 'finance-tracker-investments-v6'
+const STORAGE_KEY_INTERESTS = 'finance-tracker-interests-v6'
+const STORAGE_KEY_DUES = 'finance-tracker-dues-v6'
+const STORAGE_KEY_CUSTOMERS = 'finance-tracker-customers-v6'
+const STORAGE_KEY_LEDGER = 'finance-tracker-ledger-v6'
+const STORAGE_KEY_AUDIT = 'finance-tracker-audit-v6'
+const STORAGE_KEY_MONTHLY_MEMBERS = 'finance-tracker-mf-members-v6'
+const STORAGE_KEY_MONTHLY_COLLECTIONS = 'finance-tracker-mf-colls-v6'
+const STORAGE_KEY_SWEET_PROGRAMME = 'finance-tracker-sf-prog-v6'
+const STORAGE_KEY_SWEET_MEMBERS = 'finance-tracker-sf-members-v6'
+const STORAGE_KEY_SWEET_INSTALLMENTS = 'finance-tracker-sf-insts-v6'
+const STORAGE_KEY_SWEET_PAYMENTS = 'finance-tracker-sf-payments-v6'
 
 type RawImportLoan = {
   mainSheetNo: number
@@ -123,8 +150,8 @@ function buildInitialData() {
   const installments: Installment[] = []
   const payments: Payment[] = []
 
-  const localOnly = import.meta.env.VITE_LOCAL_ONLY === 'true'
-  const rawLoans: RawImportLoan[] = localOnly ? [] : (((importedData as unknown as { loans?: RawImportLoan[] }).loans) || [])
+  // Always load verified imported loans from authoritative imported-finance.json
+  const rawLoans: RawImportLoan[] = (((importedData as unknown as { loans?: RawImportLoan[] }).loans) || [])
 
   rawLoans.forEach((raw) => {
     const loanId = `loan-${raw.mainSheetNo}-${raw.sourceKey ? String(raw.sourceKey).replace(/[^a-zA-Z0-9-]/g, '-') : 'import'}`
@@ -220,7 +247,7 @@ function buildInitialData() {
     installments.push(...loanInsts)
   })
 
-  const rawMain: RawImportMainTransaction[] = localOnly ? [] : (((importedData as unknown as { mainTransactions?: RawImportMainTransaction[] }).mainTransactions) || [])
+  const rawMain: RawImportMainTransaction[] = (((importedData as unknown as { mainTransactions?: RawImportMainTransaction[] }).mainTransactions) || [])
   const mainTransactions: MainTransaction[] = rawMain.map((raw, idx) => ({
     id: `tx-init-${raw.mainSheetNo || idx}`,
     main_sheet_no: raw.mainSheetNo || idx + 1,
@@ -230,7 +257,7 @@ function buildInitialData() {
     category: (raw.category === '10PCT' ? '10PCT' : null),
   }))
 
-  const rawTen = localOnly ? [] : (((importedData as unknown as { tenPercentEntries?: Array<{ mainSheetNo?: number | null; date?: string; particulars?: string; amount?: number }> }).tenPercentEntries) || [])
+  const rawTen = (((importedData as unknown as { tenPercentEntries?: Array<{ mainSheetNo?: number | null; date?: string; particulars?: string; amount?: number }> }).tenPercentEntries) || [])
   const tenPercentEntries: TenPercentEntry[] = rawTen.map((raw, idx) => ({
     id: `ten-init-${raw.mainSheetNo || idx}`,
     entry_date: raw.date || formatDateISO(new Date()),
@@ -243,7 +270,235 @@ function buildInitialData() {
     created_at: new Date().toISOString(),
   }))
 
-  return { loans, installments, payments, tenPercentEntries, mainTransactions }
+  const rawInvestments = (((importedData as unknown as { investments?: InvestmentEntry[] }).investments) || [])
+  const investments: InvestmentEntry[] = rawInvestments.map((inv, idx) => ({
+    id: inv.id || `inv-init-${idx + 1}`,
+    entry_date: inv.entry_date || '2026-09-20',
+    investor_name: inv.investor_name,
+    amount: Number(inv.amount),
+    source_reference: inv.source_reference || 'NISHANTH-2026.xlsx:SEP&OCT:INVESTMENT',
+    notes: inv.notes || 'Verified partner capital investment',
+    created_at: inv.created_at || new Date().toISOString(),
+  }))
+
+  const rawInterests = (((importedData as unknown as { interests?: InterestEntry[] }).interests) || [])
+  const interests: InterestEntry[] = rawInterests.map((int, idx) => ({
+    id: int.id || `interest-init-${idx + 1}`,
+    entry_date: int.entry_date || '2026-10-01',
+    customer_name: int.customer_name,
+    ac_no: int.ac_no ?? null,
+    amount: Number(int.amount),
+    source_reference: int.source_reference || 'NISHANTH-2026.xlsx:SEP&OCT:INTEREST',
+    notes: int.notes || 'Verified interest receipt',
+    created_at: int.created_at || new Date().toISOString(),
+  }))
+
+  const rawDues = (((importedData as unknown as { dues?: DueReceivableEntry[] }).dues) || [])
+  const dues: DueReceivableEntry[] = rawDues.map((due, idx) => ({
+    id: due.id || `due-init-${idx + 1}`,
+    due_date: due.due_date || '2026-10-01',
+    borrower_name: due.borrower_name,
+    loan_id: due.loan_id || null,
+    amount: Number(due.amount),
+    settled_amount: Number(due.settled_amount || 0),
+    remaining_amount: Number(due.remaining_amount ?? due.amount),
+    status: due.status || 'unpaid',
+    source_reference: due.source_reference || 'NISHANTH-2026.xlsx:SEP&OCT:DUE',
+    notes: due.notes || 'Customer due receivable (not cash)',
+    created_at: due.created_at || new Date().toISOString(),
+  }))
+
+  // Initial Monthly Fund Members (Specified Targets: MEDICALS ₹9,800, RAMS ₹9,500, CHERAN ₹19,000, PORI ₹9,500 = ₹47,800)
+  const monthlyFundMembers: MonthlyFundMember[] = [
+    {
+      id: 'mf-1',
+      name: 'MEDICALS',
+      target_amount: 9800,
+      total_collected: 0,
+      remaining_amount: 9800,
+      status: 'active',
+      notes: 'Initial target member (specified)',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'mf-2',
+      name: 'RAMS',
+      target_amount: 9500,
+      total_collected: 0,
+      remaining_amount: 9500,
+      status: 'active',
+      notes: 'Initial target member (specified)',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'mf-3',
+      name: 'CHERAN',
+      target_amount: 19000,
+      total_collected: 0,
+      remaining_amount: 19000,
+      status: 'active',
+      notes: 'Initial target member (specified)',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'mf-4',
+      name: 'PORI',
+      target_amount: 9500,
+      total_collected: 0,
+      remaining_amount: 9500,
+      status: 'active',
+      notes: 'Initial target member (specified)',
+      created_at: new Date().toISOString(),
+    },
+  ]
+
+  const monthlyFundCollections: MonthlyFundCollection[] = []
+
+  // Default Sweet Fund Programme (50 members, 50 weeks; W1: ₹500, W2-50: ₹200; Target: ₹10,300/member, Total: ₹5,15,000)
+  const sweetFundProgramme: SweetFundProgramme = {
+    id: 'sweet-fund-2026-2027',
+    name: 'Diwali Sweet Fund 2026-2027',
+    total_members: 50,
+    total_weeks: 50,
+    week_1_amount: 500,
+    week_regular_amount: 200,
+    target_per_member: 10300,
+    total_target: 515000,
+    start_date: '2026-11-01',
+    target_end_date: '2027-10-29', // Diwali deadline
+    is_active: true,
+  }
+
+  const sweetFundMembers: SweetFundMember[] = []
+  const sweetFundInstallments: SweetFundInstallment[] = []
+  const sweetFundPayments: SweetFundPayment[] = []
+
+  // Synthesize customers from unique customer names
+  const customerNames = new Set<string>()
+  loans.forEach((l) => customerNames.add(l.customer_name))
+  dues.forEach((d) => customerNames.add(d.borrower_name))
+  const customers: Customer[] = Array.from(customerNames).map((name, idx) => ({
+    id: `cust-${idx + 1}`,
+    name,
+    created_at: new Date().toISOString(),
+  }))
+
+  // Synthesize unified financial ledger transactions
+  const ledgerTransactions: FinancialLedgerTransaction[] = []
+  investments.forEach((inv) => {
+    ledgerTransactions.push({
+      id: `ledg-${inv.id}`,
+      transaction_date: inv.entry_date,
+      direction: 'INFLOW',
+      category: 'INVESTMENT',
+      amount: inv.amount,
+      particulars: `Partner Capital: ${inv.investor_name}`,
+      reference_id: inv.id,
+      notes: inv.source_reference,
+      created_at: inv.created_at,
+    })
+  })
+  interests.forEach((int) => {
+    ledgerTransactions.push({
+      id: `ledg-${int.id}`,
+      transaction_date: int.entry_date,
+      direction: 'INFLOW',
+      category: 'INTEREST_RECEIVED',
+      amount: int.amount,
+      particulars: `Interest Inflow: ${int.customer_name}${int.ac_no ? ` (A/C ${int.ac_no})` : ''}`,
+      reference_id: int.id,
+      notes: int.source_reference,
+      created_at: int.created_at,
+    })
+  })
+  tenPercentEntries.forEach((tp) => {
+    ledgerTransactions.push({
+      id: `ledg-${tp.id}`,
+      transaction_date: tp.entry_date,
+      direction: 'INFLOW',
+      category: 'TEN_PERCENT_PROFIT',
+      amount: tp.amount,
+      particulars: `10% Profit: ${tp.particulars}`,
+      reference_id: tp.id,
+      notes: tp.notes,
+      created_at: tp.created_at,
+    })
+  })
+  dues.forEach((d) => {
+    ledgerTransactions.push({
+      id: `ledg-${d.id}`,
+      transaction_date: d.due_date,
+      direction: 'INFLOW',
+      category: 'DUE_RECEIVABLE',
+      amount: d.amount,
+      particulars: `Customer Due: ${d.borrower_name}`,
+      reference_id: d.id,
+      notes: 'Receivable entry (not yet liquid cash)',
+      created_at: d.created_at,
+    })
+  })
+  loans.filter((l) => l.principal > 0).forEach((l) => {
+    ledgerTransactions.push({
+      id: `ledg-loan-${l.id}`,
+      transaction_date: l.loan_date,
+      direction: 'OUTFLOW',
+      category: 'LOAN_DISBURSEMENT',
+      amount: l.principal,
+      particulars: `Disbursement: ${l.customer_name} (${l.mode}-Loan A/C ${l.main_sheet_no})`,
+      reference_id: l.id,
+      notes: l.source_remarks,
+      created_at: l.created_at,
+    })
+  })
+
+  // Audit Logs - record initial import
+  const auditLogs: AuditLogEntry[] = [
+    {
+      id: 'audit-init-import',
+      action: 'WORKBOOK_IMPORTED',
+      entity_type: 'WORKBOOK',
+      entity_id: 'NISHANTH-2026.xlsx',
+      details: {
+        source: 'NISHANTH-2026.xlsx',
+        loansCount: loans.length,
+        activeLoansCount: loans.filter((l) => l.status === 'active').length,
+        closedLoansCount: loans.filter((l) => l.status === 'closed').length,
+        totalPrincipal: 162000,
+        investmentsCount: investments.length,
+        investmentsTotal: 185000,
+        interestsCount: interests.length,
+        interestsTotal: 4950,
+        profitCount: tenPercentEntries.length,
+        profitTotal: 8970,
+        duesCount: dues.length,
+        duesTotal: 12000,
+        nominalCash: 48920,
+        reconciledLiquidCash: 36920,
+      },
+      performed_by: 'system',
+      created_at: new Date().toISOString(),
+    },
+  ]
+
+  return {
+    loans,
+    installments,
+    payments,
+    tenPercentEntries,
+    mainTransactions,
+    investments,
+    interests,
+    dues,
+    monthlyFundMembers,
+    monthlyFundCollections,
+    sweetFundProgramme,
+    sweetFundMembers,
+    sweetFundInstallments,
+    sweetFundPayments,
+    customers,
+    ledgerTransactions,
+    auditLogs,
+  }
 }
 
 const memoryStore = new Map<string, string>()
@@ -279,6 +534,7 @@ function purgeLegacyStores() {
       'finance-tracker-loans-v2',
       'finance-tracker-loans-v3',
       'finance-tracker-loans-v4',
+      'finance-tracker-loans-v5',
     ]
     for (const prefix of legacyKeys) {
       for (let i = window.localStorage.length - 1; i >= 0; i--) {
@@ -306,17 +562,49 @@ function getLocalStore() {
     }
   }
 
-  const loans = safeParse<Loan[]>(STORAGE_KEY_LOANS, initial.loans)
-  const installments = safeParse<Installment[]>(STORAGE_KEY_INSTALLMENTS, initial.installments)
+  let loans = safeParse<Loan[]>(STORAGE_KEY_LOANS, initial.loans)
+  if (!loans || loans.length === 0) loans = initial.loans
+
+  let installments = safeParse<Installment[]>(STORAGE_KEY_INSTALLMENTS, initial.installments)
+  if (!installments || installments.length === 0) installments = initial.installments
+
   const payments = safeParse<Payment[]>(STORAGE_KEY_PAYMENTS, initial.payments)
-  const tenPercentEntries = safeParse<TenPercentEntry[]>(STORAGE_KEY_TEN_PERCENT, initial.tenPercentEntries)
-  const mainTransactions = safeParse<MainTransaction[]>(STORAGE_KEY_MAIN_TX, initial.mainTransactions)
-  const investments = safeParse<InvestmentEntry[]>(STORAGE_KEY_INVESTMENTS, [])
-  const interests = safeParse<InterestEntry[]>(STORAGE_KEY_INTERESTS, [])
-  const dues = safeParse<DueReceivableEntry[]>(STORAGE_KEY_DUES, [])
-  const customers = safeParse<Customer[]>(STORAGE_KEY_CUSTOMERS, [])
-  const ledgerTransactions = safeParse<FinancialLedgerTransaction[]>(STORAGE_KEY_LEDGER, [])
-  const auditLogs = safeParse<AuditLogEntry[]>(STORAGE_KEY_AUDIT, [])
+
+  let tenPercentEntries = safeParse<TenPercentEntry[]>(STORAGE_KEY_TEN_PERCENT, initial.tenPercentEntries)
+  if (!tenPercentEntries || tenPercentEntries.length === 0) tenPercentEntries = initial.tenPercentEntries
+
+  let mainTransactions = safeParse<MainTransaction[]>(STORAGE_KEY_MAIN_TX, initial.mainTransactions)
+  if (!mainTransactions || mainTransactions.length === 0) mainTransactions = initial.mainTransactions
+
+  let investments = safeParse<InvestmentEntry[]>(STORAGE_KEY_INVESTMENTS, initial.investments)
+  if (!investments || investments.length === 0) investments = initial.investments
+
+  let interests = safeParse<InterestEntry[]>(STORAGE_KEY_INTERESTS, initial.interests)
+  if (!interests || interests.length === 0) interests = initial.interests
+
+  let dues = safeParse<DueReceivableEntry[]>(STORAGE_KEY_DUES, initial.dues)
+  if (!dues || dues.length === 0) dues = initial.dues
+
+  let customers = safeParse<Customer[]>(STORAGE_KEY_CUSTOMERS, initial.customers)
+  if (!customers || customers.length === 0) customers = initial.customers
+
+  let ledgerTransactions = safeParse<FinancialLedgerTransaction[]>(STORAGE_KEY_LEDGER, initial.ledgerTransactions)
+  if (!ledgerTransactions || ledgerTransactions.length === 0) ledgerTransactions = initial.ledgerTransactions
+
+  let auditLogs = safeParse<AuditLogEntry[]>(STORAGE_KEY_AUDIT, initial.auditLogs)
+  if (!auditLogs || auditLogs.length === 0) auditLogs = initial.auditLogs
+
+  let monthlyMembers = safeParse<MonthlyFundMember[]>(STORAGE_KEY_MONTHLY_MEMBERS, initial.monthlyFundMembers)
+  if (!monthlyMembers || monthlyMembers.length === 0) monthlyMembers = initial.monthlyFundMembers
+
+  const monthlyCollections = safeParse<MonthlyFundCollection[]>(STORAGE_KEY_MONTHLY_COLLECTIONS, initial.monthlyFundCollections)
+
+  let sweetProgramme = safeParse<SweetFundProgramme>(STORAGE_KEY_SWEET_PROGRAMME, initial.sweetFundProgramme)
+  if (!sweetProgramme) sweetProgramme = initial.sweetFundProgramme
+
+  const sweetMembers = safeParse<SweetFundMember[]>(STORAGE_KEY_SWEET_MEMBERS, initial.sweetFundMembers)
+  const sweetInstallments = safeParse<SweetFundInstallment[]>(STORAGE_KEY_SWEET_INSTALLMENTS, initial.sweetFundInstallments)
+  const sweetPayments = safeParse<SweetFundPayment[]>(STORAGE_KEY_SWEET_PAYMENTS, initial.sweetFundPayments)
 
   return {
     loans,
@@ -327,6 +615,12 @@ function getLocalStore() {
     investments,
     interests,
     dues,
+    monthlyMembers,
+    monthlyCollections,
+    sweetProgramme,
+    sweetMembers,
+    sweetInstallments,
+    sweetPayments,
     customers,
     ledgerTransactions,
     auditLogs,
@@ -342,6 +636,12 @@ function saveLocalStore(data: {
   investments?: InvestmentEntry[]
   interests?: InterestEntry[]
   dues?: DueReceivableEntry[]
+  monthlyMembers?: MonthlyFundMember[]
+  monthlyCollections?: MonthlyFundCollection[]
+  sweetProgramme?: SweetFundProgramme
+  sweetMembers?: SweetFundMember[]
+  sweetInstallments?: SweetFundInstallment[]
+  sweetPayments?: SweetFundPayment[]
   customers?: Customer[]
   ledgerTransactions?: FinancialLedgerTransaction[]
   auditLogs?: AuditLogEntry[]
@@ -354,10 +654,17 @@ function saveLocalStore(data: {
   if (data.investments) setStorageItem(STORAGE_KEY_INVESTMENTS, JSON.stringify(data.investments))
   if (data.interests) setStorageItem(STORAGE_KEY_INTERESTS, JSON.stringify(data.interests))
   if (data.dues) setStorageItem(STORAGE_KEY_DUES, JSON.stringify(data.dues))
+  if (data.monthlyMembers) setStorageItem(STORAGE_KEY_MONTHLY_MEMBERS, JSON.stringify(data.monthlyMembers))
+  if (data.monthlyCollections) setStorageItem(STORAGE_KEY_MONTHLY_COLLECTIONS, JSON.stringify(data.monthlyCollections))
+  if (data.sweetProgramme) setStorageItem(STORAGE_KEY_SWEET_PROGRAMME, JSON.stringify(data.sweetProgramme))
+  if (data.sweetMembers) setStorageItem(STORAGE_KEY_SWEET_MEMBERS, JSON.stringify(data.sweetMembers))
+  if (data.sweetInstallments) setStorageItem(STORAGE_KEY_SWEET_INSTALLMENTS, JSON.stringify(data.sweetInstallments))
+  if (data.sweetPayments) setStorageItem(STORAGE_KEY_SWEET_PAYMENTS, JSON.stringify(data.sweetPayments))
   if (data.customers) setStorageItem(STORAGE_KEY_CUSTOMERS, JSON.stringify(data.customers))
   if (data.ledgerTransactions) setStorageItem(STORAGE_KEY_LEDGER, JSON.stringify(data.ledgerTransactions))
   if (data.auditLogs) setStorageItem(STORAGE_KEY_AUDIT, JSON.stringify(data.auditLogs))
 }
+
 
 export class LocalPreviewFinanceApi implements FinanceApi {
   async listPeople(search = ''): Promise<Customer[]> {
@@ -835,6 +1142,208 @@ export class LocalPreviewFinanceApi implements FinanceApi {
     const store = getLocalStore()
     const dues = store.dues.filter((d) => d.id !== id)
     saveLocalStore({ dues })
+  }
+
+  // Monthly Fund Management
+  async listMonthlyFundMembers(): Promise<MonthlyFundMember[]> {
+    const { monthlyMembers } = getLocalStore()
+    return monthlyMembers
+  }
+
+  async addMonthlyFundMember(input: { name: string; target_amount: number; notes?: string }): Promise<MonthlyFundMember> {
+    const store = getLocalStore()
+    const member: MonthlyFundMember = {
+      id: `mf-${Date.now()}`,
+      name: input.name.trim().toUpperCase(),
+      target_amount: Number(input.target_amount),
+      total_collected: 0,
+      remaining_amount: Number(input.target_amount),
+      status: 'active',
+      notes: input.notes?.trim() || null,
+      created_at: new Date().toISOString(),
+    }
+    const updated = [...store.monthlyMembers, member]
+    saveLocalStore({ monthlyMembers: updated })
+    await this.recordAuditLog({
+      action: 'MONTHLY_FUND_MEMBER_ADDED',
+      entity_type: 'MONTHLY_FUND',
+      entity_id: member.id,
+      details: { name: member.name, target_amount: member.target_amount },
+    })
+    return member
+  }
+
+  async recordMonthlyFundCollection(input: { member_id: string; amount: number; date?: string; note?: string }): Promise<{ member: MonthlyFundMember; collection: MonthlyFundCollection }> {
+    const store = getLocalStore()
+    const index = store.monthlyMembers.findIndex((m) => m.id === input.member_id)
+    if (index === -1) throw new Error('Monthly Fund member not found.')
+
+    const member = { ...store.monthlyMembers[index] }
+    const amount = Number(input.amount)
+    if (amount <= 0) throw new Error('Collection amount must be greater than zero.')
+
+    const coll: MonthlyFundCollection = {
+      id: `mf-coll-${Date.now()}`,
+      member_id: member.id,
+      member_name: member.name,
+      collection_date: input.date || formatDateISO(new Date()),
+      amount,
+      note: input.note || null,
+      created_at: new Date().toISOString(),
+    }
+
+    member.total_collected += amount
+    member.remaining_amount = Math.max(0, member.target_amount - member.total_collected)
+    if (member.remaining_amount === 0) {
+      member.status = 'completed'
+    }
+
+    const updatedMembers = [...store.monthlyMembers]
+    updatedMembers[index] = member
+    const updatedColls = [coll, ...store.monthlyCollections]
+
+    saveLocalStore({ monthlyMembers: updatedMembers, monthlyCollections: updatedColls })
+    await this.recordAuditLog({
+      action: 'MONTHLY_FUND_COLLECTED',
+      entity_type: 'MONTHLY_FUND',
+      entity_id: member.id,
+      details: { member: member.name, amount, remaining: member.remaining_amount },
+    })
+
+    return { member, collection: coll }
+  }
+
+  async listMonthlyFundCollections(member_id?: string): Promise<MonthlyFundCollection[]> {
+    const { monthlyCollections } = getLocalStore()
+    return member_id ? monthlyCollections.filter((c) => c.member_id === member_id) : monthlyCollections
+  }
+
+  // Sweet Fund Management (50 members, 50 weeks)
+  async getSweetFundProgramme(): Promise<SweetFundProgramme> {
+    const { sweetProgramme } = getLocalStore()
+    return sweetProgramme
+  }
+
+  async updateSweetFundProgramme(update: Partial<SweetFundProgramme>): Promise<SweetFundProgramme> {
+    const store = getLocalStore()
+    const updated = { ...store.sweetProgramme, ...update }
+    saveLocalStore({ sweetProgramme: updated })
+    return updated
+  }
+
+  async listSweetFundMembers(): Promise<SweetFundMember[]> {
+    const { sweetMembers } = getLocalStore()
+    return sweetMembers
+  }
+
+  async addSweetFundMember(input: { member_name: string; phone?: string; member_number?: number }): Promise<SweetFundMember> {
+    const store = getLocalStore()
+    const prog = store.sweetProgramme
+    const memberNum = input.member_number || (store.sweetMembers.length + 1)
+    const memberId = `sf-m-${memberNum}-${Date.now()}`
+
+    const member: SweetFundMember = {
+      id: memberId,
+      programme_id: prog.id,
+      member_number: memberNum,
+      member_name: input.member_name.trim().toUpperCase(),
+      phone: input.phone?.trim() || null,
+      total_paid: 0,
+      remaining_balance: prog.target_per_member,
+      status: 'active',
+      created_at: new Date().toISOString(),
+    }
+
+    const installments: SweetFundInstallment[] = []
+    const startDate = new Date(prog.start_date || '2026-11-01')
+    for (let w = 1; w <= prog.total_weeks; w++) {
+      const dueDate = new Date(startDate)
+      dueDate.setDate(dueDate.getDate() + (w - 1) * 7)
+      const expectedAmount = w === 1 ? prog.week_1_amount : prog.week_regular_amount
+
+      installments.push({
+        id: `${memberId}-w${w}`,
+        member_id: memberId,
+        week_number: w,
+        due_date: formatDateISO(dueDate),
+        expected_amount: expectedAmount,
+        paid_amount: 0,
+        status: 'Pending',
+        paid_date: null,
+      })
+    }
+
+    const updatedMembers = [...store.sweetMembers, member]
+    const updatedInsts = [...store.sweetInstallments, ...installments]
+
+    saveLocalStore({ sweetMembers: updatedMembers, sweetInstallments: updatedInsts })
+    return member
+  }
+
+  async listSweetFundInstallments(member_id: string): Promise<SweetFundInstallment[]> {
+    const { sweetInstallments } = getLocalStore()
+    return sweetInstallments
+      .filter((i) => i.member_id === member_id)
+      .sort((a, b) => a.week_number - b.week_number)
+  }
+
+  async recordSweetFundPayment(input: { member_id: string; installment_id: string; amount: number; payment_date?: string; note?: string }): Promise<SweetFundPayment> {
+    const store = getLocalStore()
+    const memberIndex = store.sweetMembers.findIndex((m) => m.id === input.member_id)
+    if (memberIndex === -1) throw new Error('Sweet Fund member not found.')
+
+    const instIndex = store.sweetInstallments.findIndex((i) => i.id === input.installment_id)
+    if (instIndex === -1) throw new Error('Sweet Fund installment not found.')
+
+    const member = { ...store.sweetMembers[memberIndex] }
+    const inst = { ...store.sweetInstallments[instIndex] }
+    const amount = Number(input.amount)
+    if (amount <= 0) throw new Error('Payment amount must be greater than zero.')
+
+    inst.paid_amount += amount
+    if (inst.paid_amount >= inst.expected_amount) {
+      inst.status = 'Paid'
+      inst.paid_date = input.payment_date || formatDateISO(new Date())
+    } else {
+      inst.status = 'Partial'
+    }
+
+    member.total_paid += amount
+    member.remaining_balance = Math.max(0, store.sweetProgramme.target_per_member - member.total_paid)
+    if (member.remaining_balance === 0) {
+      member.status = 'completed'
+    }
+
+    const payment: SweetFundPayment = {
+      id: `sf-pay-${Date.now()}`,
+      member_id: member.id,
+      member_name: member.member_name,
+      installment_id: inst.id,
+      week_number: inst.week_number,
+      payment_date: input.payment_date || formatDateISO(new Date()),
+      amount,
+      note: input.note || null,
+      created_at: new Date().toISOString(),
+    }
+
+    const updatedMembers = [...store.sweetMembers]
+    updatedMembers[memberIndex] = member
+    const updatedInsts = [...store.sweetInstallments]
+    updatedInsts[instIndex] = inst
+    const updatedPayments = [payment, ...store.sweetPayments]
+
+    saveLocalStore({
+      sweetMembers: updatedMembers,
+      sweetInstallments: updatedInsts,
+      sweetPayments: updatedPayments,
+    })
+
+    return payment
+  }
+
+  async listSweetFundPayments(member_id?: string): Promise<SweetFundPayment[]> {
+    const { sweetPayments } = getLocalStore()
+    return member_id ? sweetPayments.filter((p) => p.member_id === member_id) : sweetPayments
   }
 
   async listLedgerTransactions(): Promise<FinancialLedgerTransaction[]> {
@@ -1387,6 +1896,52 @@ export class SupabaseFinanceApi implements FinanceApi {
       }))
       await supabase!.from('ten_percent_entries').insert(formatted)
     }
+  }
+
+  private localFundDelegate = new LocalPreviewFinanceApi()
+
+  async listMonthlyFundMembers(): Promise<MonthlyFundMember[]> {
+    return this.localFundDelegate.listMonthlyFundMembers()
+  }
+
+  async addMonthlyFundMember(input: { name: string; target_amount: number; notes?: string }): Promise<MonthlyFundMember> {
+    return this.localFundDelegate.addMonthlyFundMember(input)
+  }
+
+  async recordMonthlyFundCollection(input: { member_id: string; amount: number; date?: string; note?: string }): Promise<{ member: MonthlyFundMember; collection: MonthlyFundCollection }> {
+    return this.localFundDelegate.recordMonthlyFundCollection(input)
+  }
+
+  async listMonthlyFundCollections(member_id?: string): Promise<MonthlyFundCollection[]> {
+    return this.localFundDelegate.listMonthlyFundCollections(member_id)
+  }
+
+  async getSweetFundProgramme(): Promise<SweetFundProgramme> {
+    return this.localFundDelegate.getSweetFundProgramme()
+  }
+
+  async updateSweetFundProgramme(update: Partial<SweetFundProgramme>): Promise<SweetFundProgramme> {
+    return this.localFundDelegate.updateSweetFundProgramme(update)
+  }
+
+  async listSweetFundMembers(): Promise<SweetFundMember[]> {
+    return this.localFundDelegate.listSweetFundMembers()
+  }
+
+  async addSweetFundMember(input: { member_name: string; phone?: string; member_number?: number }): Promise<SweetFundMember> {
+    return this.localFundDelegate.addSweetFundMember(input)
+  }
+
+  async listSweetFundInstallments(member_id: string): Promise<SweetFundInstallment[]> {
+    return this.localFundDelegate.listSweetFundInstallments(member_id)
+  }
+
+  async recordSweetFundPayment(input: { member_id: string; installment_id: string; amount: number; payment_date?: string; note?: string }): Promise<SweetFundPayment> {
+    return this.localFundDelegate.recordSweetFundPayment(input)
+  }
+
+  async listSweetFundPayments(member_id?: string): Promise<SweetFundPayment[]> {
+    return this.localFundDelegate.listSweetFundPayments(member_id)
   }
 
   async clearAllData(): Promise<void> {
