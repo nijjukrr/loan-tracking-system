@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { financeApi } from '../lib/financeApi'
 import { calculateNextDueDate, formatDateISO } from '../lib/financeLogic'
@@ -18,8 +18,9 @@ export function DailyPage({ onOpenNewLoan }: Props) {
   const [search, setSearch] = useState('')
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null)
   const [showPayModal, setShowPayModal] = useState(false)
+  const [todayStr] = useState(() => formatDateISO(new Date()))
 
-  const loadData = () => {
+  const loadData = useCallback(() => {
     setLoading(true)
     setError('')
     financeApi
@@ -30,13 +31,11 @@ export function DailyPage({ onOpenNewLoan }: Props) {
         setError(err instanceof Error ? err.message : 'Unable to load Daily accounts.')
       })
       .finally(() => setLoading(false))
-  }
+  }, [search])
 
   useEffect(() => {
     loadData()
-  }, [search])
-
-  const todayStr = formatDateISO(new Date())
+  }, [loadData])
   const moneyGiven = loans.reduce((sum, l) => sum + Number(l.principal || 0), 0)
 
   return (

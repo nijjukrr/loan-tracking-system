@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { financeApi } from '../lib/financeApi'
 import { calculateNextDueDate } from '../lib/financeLogic'
@@ -18,7 +18,7 @@ export function BorrowerDetailPage() {
   const [showPayModal, setShowPayModal] = useState(false)
   const [selectedInst, setSelectedInst] = useState<Installment | null>(null)
 
-  const loadData = () => {
+  const loadData = useCallback(() => {
     if (!id) return
     setLoading(true)
     financeApi
@@ -34,11 +34,11 @@ export function BorrowerDetailPage() {
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Unable to load borrower details.'))
       .finally(() => setLoading(false))
-  }
+  }, [id])
 
   useEffect(() => {
     loadData()
-  }, [id])
+  }, [loadData])
 
   async function handleCloseAccount() {
     if (!loan) return

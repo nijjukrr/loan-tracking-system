@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { financeApi } from '../lib/financeApi'
 import type { Loan } from '../types'
@@ -10,18 +10,18 @@ export function ClosedAccountsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
-  const loadData = () => {
+  const loadData = useCallback(() => {
     setLoading(true)
     financeApi
       .listLoans({ status: 'closed', search })
       .then((data) => setLoans(data))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false))
-  }
+  }, [search])
 
   useEffect(() => {
     loadData()
-  }, [search])
+  }, [loadData])
 
   return (
     <>

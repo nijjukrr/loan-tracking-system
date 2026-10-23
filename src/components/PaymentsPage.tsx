@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { financeApi } from '../lib/financeApi'
 import { formatDateISO } from '../lib/financeLogic'
@@ -13,7 +13,7 @@ export function PaymentsPage() {
   const [search, setSearch] = useState('')
   const [dateFilter, setDateFilter] = useState<'ALL' | 'TODAY' | 'WEEK' | 'MONTH'>('ALL')
 
-  const loadData = () => {
+  const loadData = useCallback(() => {
     setLoading(true)
     const mode = modeFilter === 'ALL' ? undefined : modeFilter
     financeApi
@@ -21,11 +21,11 @@ export function PaymentsPage() {
       .then((data) => setPayments(data))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false))
-  }
+  }, [modeFilter, search])
 
   useEffect(() => {
     loadData()
-  }, [modeFilter, search])
+  }, [loadData])
 
   const todayStr = formatDateISO(new Date())
 
