@@ -182,7 +182,6 @@ export function InterestPage() {
                   <th>Receipt Date</th>
                   <th style={{ textAlign: 'center' }}>Account #</th>
                   <th style={{ textAlign: 'right' }}>Interest Received</th>
-                  <th>Source Reference</th>
                   <th>Notes</th>
                   <th style={{ textAlign: 'center' }}>Action</th>
                 </tr>
@@ -197,9 +196,6 @@ export function InterestPage() {
                     </td>
                     <td className="amount-cell primary-cell" style={{ textAlign: 'right' }}>
                       {currency.format(item.amount)}
-                    </td>
-                    <td style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
-                      {item.source_reference || 'SEP&OCT (Cols K-N)'}
                     </td>
                     <td style={{ fontSize: '0.8125rem' }}>{item.notes || '—'}</td>
                     <td style={{ textAlign: 'center' }}>

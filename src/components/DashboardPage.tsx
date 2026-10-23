@@ -110,7 +110,7 @@ export function DashboardPage({ onOpenNewLoan }: Props) {
 
       {loading || !metrics ? (
         <div className="kpi-grid">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
             <div className="kpi-card" key={i} style={{ opacity: 0.5 }}>
               <span className="kpi-label">Loading…</span>
               <span className="kpi-value">—</span>
@@ -119,68 +119,49 @@ export function DashboardPage({ onOpenNewLoan }: Props) {
         </div>
       ) : (
         <>
-          {/* Audited Financial Ledger Primary KPIs */}
+          {/* Audited Financial Ledger Primary KPIs (matching Excel workbook) */}
           <div className="kpi-grid">
             <Link to="/investments" className="kpi-card" style={{ textDecoration: 'none' }}>
-              <span className="kpi-label">Investments Received</span>
+              <span className="kpi-label">INVEST</span>
               <span className="kpi-value">{currency.format(metrics.investmentReceived)}</span>
               <span className="kpi-subtext">8 partner capital credits (₹1.85L)</span>
             </Link>
 
-            <Link to="/active-accounts" className="kpi-card" style={{ textDecoration: 'none' }}>
-              <span className="kpi-label">Principal Disbursed</span>
-              <span className="kpi-value">{currency.format(metrics.principalDisbursed ?? 162000)}</span>
-              <span className="kpi-subtext">17 loan accounts ledgered (₹1.62L)</span>
-            </Link>
-
             <Link to="/interest" className="kpi-card" style={{ textDecoration: 'none' }}>
-              <span className="kpi-label">Interest Received</span>
+              <span className="kpi-label">INTEREST</span>
               <span className="kpi-value">{currency.format(metrics.interestReceived)}</span>
               <span className="kpi-subtext">9 receipts verified (₹4,950)</span>
             </Link>
 
             <Link to="/profit/ten-percent" className="kpi-card accent-card" style={{ textDecoration: 'none' }}>
-              <span className="kpi-label">10% Profit Collected</span>
+              <span className="kpi-label">PROFIT10%</span>
               <span className="kpi-value">{currency.format(metrics.tenPercentProfit)}</span>
               <span className="kpi-subtext">24 verified entries (₹8,970)</span>
             </Link>
 
             <Link to="/reminders" className="kpi-card danger-card" style={{ textDecoration: 'none' }}>
-              <span className="kpi-label">Outstanding Dues</span>
+              <span className="kpi-label">DUE</span>
               <span className="kpi-value text-danger">{currency.format(metrics.outstandingDues)}</span>
               <span className="kpi-subtext">6 customer receivables (₹12,000)</span>
             </Link>
 
             <Link to="/reconciliation" className="kpi-card" style={{ textDecoration: 'none' }}>
-              <span className="kpi-label">Total Ledger Value</span>
+              <span className="kpi-label">TOTAL</span>
               <span className="kpi-value">{currency.format(metrics.workbookTotalLedger)}</span>
-              <span className="kpi-subtext">Inv + Int + Profit + Dues (₹2,10,920)</span>
+              <span className="kpi-subtext">INVEST + INTEREST + PROFIT10% + DUE</span>
+            </Link>
+
+            <Link to="/active-accounts" className="kpi-card" style={{ textDecoration: 'none' }}>
+              <span className="kpi-label">LOAN</span>
+              <span className="kpi-value">{currency.format(metrics.principalDisbursed ?? 162000)}</span>
+              <span className="kpi-subtext">17 loan accounts ledgered (₹1.62L)</span>
             </Link>
 
             <Link to="/reconciliation" className="kpi-card highlight-card" style={{ textDecoration: 'none' }}>
-              <span className="kpi-label">Excel Nominal Cash</span>
+              <span className="kpi-label">CASH IN BANK</span>
               <span className="kpi-value">{currency.format(metrics.workbookCashInHand)}</span>
-              <span className="kpi-subtext">Ledger ₹2.10L − Principal ₹1.62L</span>
+              <span className="kpi-subtext">TOTAL − LOAN</span>
             </Link>
-
-            <Link to="/reconciliation" className="kpi-card success-card" style={{ textDecoration: 'none', background: '#ecfdf5', borderColor: '#10b981' }}>
-              <span className="kpi-label">Actual Liquid Available Cash</span>
-              <span className="kpi-value" style={{ color: '#047857' }}>{currency.format(metrics.reconciledAvailableCash)}</span>
-              <span className="kpi-subtext">Excludes ₹12k unpaid customer dues</span>
-            </Link>
-          </div>
-
-          {/* Cash vs Unpaid Due Accounting Alert */}
-          <div className="card" style={{ marginBottom: '1.5rem', background: '#eff6ff', borderLeft: '4px solid #3b82f6' }}>
-            <h3 style={{ margin: '0 0 0.375rem', fontSize: '0.9375rem', fontWeight: 700, color: '#1e40af' }}>
-              ℹ️ Accounting Reconciliation: Nominal vs Liquid Cash Variance
-            </h3>
-            <p style={{ margin: 0, fontSize: '0.8125rem', color: '#1e3a8a', lineHeight: '1.5' }}>
-              The Excel workbook displays a nominal cash balance of <strong>{currency.format(metrics.workbookCashInHand)}</strong> (₹210,920 − ₹162,000),
-              which arithmetically includes <strong>{currency.format(metrics.outstandingDues)}</strong> in customer dues.
-              In true cash accounting, unpaid dues are receivables and cannot be spent.
-              Therefore, the actual liquid available cash is <strong>{currency.format(metrics.reconciledAvailableCash)}</strong>.
-            </p>
           </div>
 
           {/* Operational Metrics Cards */}

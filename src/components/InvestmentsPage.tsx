@@ -174,7 +174,6 @@ export function InvestmentsPage() {
                   <th>Investor Name</th>
                   <th>Entry Date</th>
                   <th style={{ textAlign: 'right' }}>Capital Contributed</th>
-                  <th>Source Reference</th>
                   <th>Notes</th>
                   <th style={{ textAlign: 'center' }}>Action</th>
                 </tr>
@@ -186,9 +185,6 @@ export function InvestmentsPage() {
                     <td>{inv.entry_date}</td>
                     <td className="amount-cell primary-cell" style={{ textAlign: 'right' }}>
                       {currency.format(inv.amount)}
-                    </td>
-                    <td style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
-                      {inv.source_reference || 'SEP&OCT (Cols P-S)'}
                     </td>
                     <td style={{ fontSize: '0.8125rem' }}>{inv.notes || '—'}</td>
                     <td style={{ textAlign: 'center' }}>

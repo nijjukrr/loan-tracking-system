@@ -224,10 +224,9 @@ export function PaymentsPage() {
           <div className="empty-state" style={{ padding: '2.5rem 1.5rem', textAlign: 'center' }}>
             {payments.length === 0 ? (
               <>
-                <strong style={{ fontSize: '1.0625rem', color: 'var(--text)' }}>No Historical Payment Receipts in Source Workbook</strong>
-                <p style={{ margin: '0.5rem auto 0', maxWidth: '520px', fontSize: '0.875rem', color: 'var(--muted)', lineHeight: '1.5' }}>
-                  The source workbook (<em>NISHANTH-2026.xlsx</em>) contains loan ledger disbursements and interest/profit ledgers, but no borrower collection receipt vouchers.
-                  New payments recorded via Daily/Weekly loan actions or borrower timeline will appear here immediately with verified principal and interest allocations.
+                <strong style={{ fontSize: '1.0625rem', color: 'var(--text)' }}>No Payments Recorded Yet</strong>
+                <p style={{ margin: '0.5rem auto 0', maxWidth: '420px', fontSize: '0.875rem', color: 'var(--muted)', lineHeight: '1.5' }}>
+                  Payments collected from borrowers will appear here once recorded.
                 </p>
               </>
             ) : (
