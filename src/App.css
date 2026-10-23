@@ -973,3 +973,113 @@ select:focus {
 }
 
 .danger-button:hover { background: #fef2f2; }
+
+/* ==========================================================================
+   Accessibility & Responsive Finance Enhancements (Milestone 25)
+   ========================================================================== */
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Tabular numeric alignment for all financial figures */
+.kpi-value,
+.amount-cell,
+.data-table td.amount-cell,
+.code-id {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* Responsive Table Wrapper with touch scrolling */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.data-table th {
+  background: #f8fafc;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 10px 14px;
+  border-bottom: 2px solid var(--line);
+  text-align: left;
+}
+
+.data-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.data-table tbody tr:hover {
+  background: rgba(241, 245, 249, 0.6);
+}
+
+/* KPI Card Variations */
+.kpi-card.highlight-card {
+  border-left: 4px solid var(--accent);
+}
+
+.kpi-card.accent-card {
+  border-left: 4px solid #10b981;
+}
+
+.kpi-card.success-card {
+  border-left: 4px solid #16803c;
+}
+
+.kpi-card.danger-card {
+  border-left: 4px solid var(--danger);
+}
+
+/* Print-friendly Account Statement & Audit Styling */
+@media print {
+  .sidebar,
+  .mobile-bar,
+  .header-actions,
+  .search-bar-card,
+  button:not(.print-keep),
+  .modal-actions {
+    display: none !important;
+  }
+
+  .app-shell {
+    display: block !important;
+    background: #fff !important;
+  }
+
+  .content {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .card, .table-card {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 11pt !important;
+  }
+
+  .data-table th, .data-table td {
+    padding: 6px 8px !important;
+    border-bottom: 1px solid #ccc !important;
+  }
+}
