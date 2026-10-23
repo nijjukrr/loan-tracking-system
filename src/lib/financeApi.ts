@@ -8,6 +8,7 @@ import {
 } from './financeLogic'
 import { supabase } from './supabase'
 import type {
+  AuditLogEntry,
   Customer,
   DashboardMetrics,
   DueReceivableEntry,
@@ -75,6 +76,10 @@ export interface FinanceApi {
   // Unified Ledger
   listLedgerTransactions(filter?: { category?: string }): Promise<FinancialLedgerTransaction[]>
 
+  // Audit Trail & Corrections
+  listAuditLogs(filter?: { entity_type?: string; entity_id?: string }): Promise<AuditLogEntry[]>
+  recordAuditLog(entry: { action: string; entity_type: string; entity_id: string; details?: Record<string, unknown>; performed_by?: string }): Promise<AuditLogEntry>
+
   // Dashboard & Administration
   getDashboardMetrics(): Promise<DashboardMetrics>
   importFullFinanceData(data: ImportedFinanceData): Promise<void>
@@ -91,6 +96,7 @@ const STORAGE_KEY_INTERESTS = 'finance-tracker-interests-v5'
 const STORAGE_KEY_DUES = 'finance-tracker-dues-v5'
 const STORAGE_KEY_CUSTOMERS = 'finance-tracker-customers-v5'
 const STORAGE_KEY_LEDGER = 'finance-tracker-ledger-v5'
+const STORAGE_KEY_AUDIT = 'finance-tracker-audit-v5'
 
 type RawImportLoan = {
   mainSheetNo: number
@@ -310,6 +316,7 @@ function getLocalStore() {
   const dues = safeParse<DueReceivableEntry[]>(STORAGE_KEY_DUES, [])
   const customers = safeParse<Customer[]>(STORAGE_KEY_CUSTOMERS, [])
   const ledgerTransactions = safeParse<FinancialLedgerTransaction[]>(STORAGE_KEY_LEDGER, [])
+  const auditLogs = safeParse<AuditLogEntry[]>(STORAGE_KEY_AUDIT, [])
 
   return {
     loans,
@@ -322,6 +329,7 @@ function getLocalStore() {
     dues,
     customers,
     ledgerTransactions,
+    auditLogs,
   }
 }
 
@@ -336,6 +344,7 @@ function saveLocalStore(data: {
   dues?: DueReceivableEntry[]
   customers?: Customer[]
   ledgerTransactions?: FinancialLedgerTransaction[]
+  auditLogs?: AuditLogEntry[]
 }) {
   if (data.loans) setStorageItem(STORAGE_KEY_LOANS, JSON.stringify(data.loans))
   if (data.installments) setStorageItem(STORAGE_KEY_INSTALLMENTS, JSON.stringify(data.installments))
@@ -347,6 +356,7 @@ function saveLocalStore(data: {
   if (data.dues) setStorageItem(STORAGE_KEY_DUES, JSON.stringify(data.dues))
   if (data.customers) setStorageItem(STORAGE_KEY_CUSTOMERS, JSON.stringify(data.customers))
   if (data.ledgerTransactions) setStorageItem(STORAGE_KEY_LEDGER, JSON.stringify(data.ledgerTransactions))
+  if (data.auditLogs) setStorageItem(STORAGE_KEY_AUDIT, JSON.stringify(data.auditLogs))
 }
 
 export class LocalPreviewFinanceApi implements FinanceApi {
@@ -832,6 +842,37 @@ export class LocalPreviewFinanceApi implements FinanceApi {
     return ledgerTransactions
   }
 
+  async listAuditLogs(filter?: { entity_type?: string; entity_id?: string }): Promise<AuditLogEntry[]> {
+    const { auditLogs } = getLocalStore()
+    return auditLogs.filter((log) => {
+      if (filter?.entity_type && log.entity_type !== filter.entity_type) return false
+      if (filter?.entity_id && log.entity_id !== filter.entity_id) return false
+      return true
+    })
+  }
+
+  async recordAuditLog(entry: {
+    action: string
+    entity_type: string
+    entity_id: string
+    details?: Record<string, unknown>
+    performed_by?: string
+  }): Promise<AuditLogEntry> {
+    const store = getLocalStore()
+    const log: AuditLogEntry = {
+      id: crypto.randomUUID(),
+      action: entry.action,
+      entity_type: entry.entity_type,
+      entity_id: entry.entity_id,
+      details: entry.details || null,
+      performed_by: entry.performed_by || 'system_operator',
+      created_at: new Date().toISOString(),
+    }
+    const updated = [log, ...store.auditLogs]
+    saveLocalStore({ auditLogs: updated })
+    return log
+  }
+
   async importFullFinanceData(data: ImportedFinanceData): Promise<void> {
     const loans: Loan[] = data.loans.map((raw) => {
       const isDaily = raw.mode === 'D'
@@ -1294,6 +1335,36 @@ export class SupabaseFinanceApi implements FinanceApi {
       .order('transaction_date', { ascending: false })
     if (error) throw error
     return (data || []) as FinancialLedgerTransaction[]
+  }
+
+  async listAuditLogs(filter?: { entity_type?: string; entity_id?: string }): Promise<AuditLogEntry[]> {
+    let query = supabase!.from('audit_logs').select('*').order('created_at', { ascending: false })
+    if (filter?.entity_type) query = query.eq('entity_type', filter.entity_type)
+    if (filter?.entity_id) query = query.eq('entity_id', filter.entity_id)
+    const { data, error } = await query
+    if (error) throw error
+    return (data || []) as AuditLogEntry[]
+  }
+
+  async recordAuditLog(entry: {
+    action: string
+    entity_type: string
+    entity_id: string
+    details?: Record<string, unknown>
+    performed_by?: string
+  }): Promise<AuditLogEntry> {
+    const { data, error } = await supabase!
+      .from('audit_logs')
+      .insert({
+        action: entry.action,
+        entity_type: entry.entity_type,
+        entity_id: entry.entity_id,
+        details: entry.details || null,
+      })
+      .select('*')
+      .single()
+    if (error) throw error
+    return data as AuditLogEntry
   }
 
   async importFullFinanceData(data: ImportedFinanceData): Promise<void> {
