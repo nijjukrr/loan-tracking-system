@@ -146,6 +146,14 @@ export function AppLayout({ onSignOut, onOpenNewLoan }: Props) {
           >
             <span>⚖️</span> Reconciliation
           </NavLink>
+
+          <NavLink
+            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+            to="/reports"
+            onClick={closeMenu}
+          >
+            <span>📄</span> Reports & Exports
+          </NavLink>
         </nav>
 
         <div className="sidebar-action">
