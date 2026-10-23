@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
+import { financeApi } from '../lib/financeApi'
 import { isSupabaseConfigured } from '../lib/supabase'
 
 type Props = {
@@ -11,6 +12,14 @@ export function AppLayout({ onSignOut, onOpenNewLoan }: Props) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const closeMenu = () => setMobileMenuOpen(false)
+
+  const handleResetData = async () => {
+    if (!window.confirm('Are you sure you want to remove all existing loan and payment data? This will reset the tracker to a clean slate.')) {
+      return
+    }
+    await financeApi.clearAllData()
+    window.location.reload()
+  }
 
   return (
     <div className="app-shell">
@@ -115,6 +124,14 @@ export function AppLayout({ onSignOut, onOpenNewLoan }: Props) {
 
         <div className="sidebar-footer">
           {!isSupabaseConfigured && <span className="preview-badge">Local excel preview</span>}
+          <button
+            className="text-button"
+            type="button"
+            style={{ color: '#ef4444', fontSize: '0.8125rem', marginTop: '0.5rem', display: 'block', width: '100%', textAlign: 'left' }}
+            onClick={handleResetData}
+          >
+            🗑️ Reset / Clear All Data
+          </button>
           {onSignOut && (
             <button className="text-button" type="button" onClick={onSignOut}>
               Sign out

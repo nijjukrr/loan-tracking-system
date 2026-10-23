@@ -38,13 +38,34 @@ export interface FinanceApi {
   addTenPercentEntry(entry: NewTenPercentEntry): Promise<TenPercentEntry>
   listUntaggedMainTransactions(): Promise<MainTransaction[]>
   tagMainTransaction(transactionId: string): Promise<TenPercentEntry>
+  clearAllData(): Promise<void>
 }
 
-const STORAGE_KEY_LOANS = 'finance-tracker-loans-v4'
-const STORAGE_KEY_INSTALLMENTS = 'finance-tracker-installments-v4'
-const STORAGE_KEY_PAYMENTS = 'finance-tracker-payments-v4'
-const STORAGE_KEY_TEN_PERCENT = 'finance-tracker-ten-percent-v4'
-const STORAGE_KEY_MAIN_TX = 'finance-tracker-main-tx-v4'
+const STORAGE_KEY_LOANS = 'finance-tracker-loans-v5'
+const STORAGE_KEY_INSTALLMENTS = 'finance-tracker-installments-v5'
+const STORAGE_KEY_PAYMENTS = 'finance-tracker-payments-v5'
+const STORAGE_KEY_TEN_PERCENT = 'finance-tracker-ten-percent-v5'
+const STORAGE_KEY_MAIN_TX = 'finance-tracker-main-tx-v5'
+
+type RawImportLoan = {
+  mainSheetNo: number
+  sourceKey?: string
+  mode: string
+  principal: number
+  sourceCredit?: number
+  sourceRemarks?: string | null
+  cleared?: boolean
+  customerName: string
+  loanDate: string
+}
+
+type RawImportMainTransaction = {
+  mainSheetNo: number
+  date: string
+  particulars: string
+  credit: number
+  category?: string | null
+}
 
 function buildInitialData() {
   const loans: Loan[] = []
@@ -52,7 +73,7 @@ function buildInitialData() {
   const payments: Payment[] = []
 
   const localOnly = import.meta.env.VITE_LOCAL_ONLY === 'true'
-  const rawLoans = localOnly ? [] : (importedData.loans || [])
+  const rawLoans: RawImportLoan[] = localOnly ? [] : ((importedData.loans as unknown as RawImportLoan[]) || [])
   const todayStr = formatDateISO(new Date())
 
   rawLoans.forEach((raw) => {
@@ -144,7 +165,8 @@ function buildInitialData() {
     installments.push(...loanInsts)
   })
 
-  const mainTransactions: MainTransaction[] = (localOnly ? [] : (importedData.mainTransactions || [])).map((mt) => ({
+  const rawMainTransactions: RawImportMainTransaction[] = localOnly ? [] : ((importedData.mainTransactions as unknown as RawImportMainTransaction[]) || [])
+  const mainTransactions: MainTransaction[] = rawMainTransactions.map((mt) => ({
     id: `mt-${mt.mainSheetNo}`,
     main_sheet_no: mt.mainSheetNo,
     transaction_date: mt.date,
@@ -169,7 +191,23 @@ function buildInitialData() {
   return { loans, installments, payments, mainTransactions, tenPercentEntries }
 }
 
+function purgeLegacyStores() {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      for (let i = window.localStorage.length - 1; i >= 0; i--) {
+        const k = window.localStorage.key(i)
+        if (k && k.startsWith('finance-tracker-') && !k.endsWith('-v5')) {
+          window.localStorage.removeItem(k)
+        }
+      }
+    }
+  } catch {
+    // Ignore in non-browser context
+  }
+}
+
 function getLocalStore() {
+  purgeLegacyStores()
   const initial = buildInitialData()
 
   const storedLoans = localStorage.getItem(STORAGE_KEY_LOANS)
@@ -465,6 +503,26 @@ class LocalPreviewFinanceApi implements FinanceApi {
     saveLocalStore({ mainTransactions: store.mainTransactions, tenPercentEntries: updatedEntries })
     return entry
   }
+
+  async clearAllData(): Promise<void> {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        for (let i = window.localStorage.length - 1; i >= 0; i--) {
+          const k = window.localStorage.key(i)
+          if (k && k.startsWith('finance-tracker-')) {
+            window.localStorage.removeItem(k)
+          }
+        }
+        window.localStorage.setItem(STORAGE_KEY_LOANS, JSON.stringify([]))
+        window.localStorage.setItem(STORAGE_KEY_INSTALLMENTS, JSON.stringify([]))
+        window.localStorage.setItem(STORAGE_KEY_PAYMENTS, JSON.stringify([]))
+        window.localStorage.setItem(STORAGE_KEY_TEN_PERCENT, JSON.stringify([]))
+        window.localStorage.setItem(STORAGE_KEY_MAIN_TX, JSON.stringify([]))
+      }
+    } catch (e) {
+      console.error('Failed to clear local storage:', e)
+    }
+  }
 }
 
 class SupabaseFinanceApi implements FinanceApi {
@@ -641,6 +699,13 @@ class SupabaseFinanceApi implements FinanceApi {
       .rpc('tag_main_transaction_as_ten_percent', { p_transaction_id: transactionId })
     if (error) throw error
     return data as TenPercentEntry
+  }
+
+  async clearAllData(): Promise<void> {
+    if (!supabase) return
+    for (const table of ['payments', 'installments', 'loans', 'customers', 'ten_percent_entries', 'main_transactions'] as const) {
+      await supabase.from(table).delete().not('id', 'is', null)
+    }
   }
 }
 

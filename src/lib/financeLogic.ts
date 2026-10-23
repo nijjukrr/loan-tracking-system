@@ -167,7 +167,12 @@ export function computeDashboardMetrics(
   tenPercentEntries: TenPercentEntry[],
   todayStr: string = formatDateISO(new Date())
 ): DashboardMetrics {
-  const importedSummary = importedData.ledgerSummary
+  const importedSummary = importedData?.ledgerSummary || {
+    cashInBank: 0,
+    loanReceived: 0,
+    outstanding: 0,
+    creditGrandTotal: 0,
+  }
   const dailyLoans = loans.filter((l) => l.mode === 'D')
   const weeklyLoans = loans.filter((l) => l.mode === 'W')
 
@@ -206,9 +211,9 @@ export function computeDashboardMetrics(
     closedAccounts,
     dueTodayCount,
     overdueCount,
-    loanReceived: importedSummary.loanReceived,
-    cashInBank: importedSummary.cashInBank,
-    outstanding: importedSummary.outstanding,
-    creditGrandTotal: importedSummary.creditGrandTotal,
+    loanReceived: importedSummary?.loanReceived ?? 0,
+    cashInBank: importedSummary?.cashInBank ?? 0,
+    outstanding: importedSummary?.outstanding ?? 0,
+    creditGrandTotal: importedSummary?.creditGrandTotal ?? 0,
   }
 }
