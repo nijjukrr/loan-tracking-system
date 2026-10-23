@@ -4,7 +4,6 @@ import { financeApi } from '../lib/financeApi'
 import type {
   DashboardMetrics,
   DueReceivableEntry,
-  Installment,
   InterestEntry,
   InvestmentEntry,
   Loan,
@@ -24,7 +23,6 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
   const [dues, setDues] = useState<DueReceivableEntry[]>([])
   const [investments, setInvestments] = useState<InvestmentEntry[]>([])
   const [loans, setLoans] = useState<Loan[]>([])
-  const [installments, setInstallments] = useState<Installment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -38,16 +36,14 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
       financeApi.listDues(),
       financeApi.listInvestments(),
       financeApi.listLoans(),
-      financeApi.listInstallments(),
     ])
-      .then(([mRes, iRes, tRes, dRes, invRes, lRes, instRes]) => {
+      .then(([mRes, iRes, tRes, dRes, invRes, lRes]) => {
         setMetrics(mRes)
         setInterests(iRes)
         setTenPercentEntries(tRes)
         setDues(dRes)
         setInvestments(invRes)
         setLoans(lRes)
-        setInstallments(instRes)
       })
       .catch((err) => {
         console.error('Dashboard load error:', err)
@@ -79,15 +75,7 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
   // Bank & Liquid Cash
   const workbookCashInHand = totalLedgerValue - totalLoansPrincipal
 
-  // Due Today & Overdue
-  const todayStr = new Date().toISOString().slice(0, 10)
-  const dueTodayInsts = installments.filter((i) => (i.due_date || '').slice(0, 10) === todayStr && i.paid_amount < i.expected_amount)
-  const dueTodayCount = dueTodayInsts.length
-  const dueTodayAmount = dueTodayInsts.reduce((sum, i) => sum + (i.expected_amount - i.paid_amount), 0)
 
-  const overdueInsts = installments.filter((i) => (i.due_date || '').slice(0, 10) < todayStr && i.paid_amount < i.expected_amount)
-  const overdueCount = overdueInsts.length
-  const overdueAmount = overdueInsts.reduce((sum, i) => sum + (i.expected_amount - i.paid_amount), 0)
 
   return (
     <div className="page-shell">
@@ -113,7 +101,7 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
 
       {loading || !metrics ? (
         <div className="kpi-grid">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div className="kpi-card" key={i} style={{ opacity: 0.5 }}>
               <span className="kpi-label">Loading…</span>
               <span className="kpi-value">—</span>
@@ -185,31 +173,13 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
             <span className="kpi-subtext">{weeklyLoans.length} accounts ledgered ({currency.format(weeklyLoansPrincipal)})</span>
           </Link>
 
-          {/* 9. DAILY LOANS */}
+          {/* 8. DAILY LOANS */}
           <Link to="/daily" className="kpi-card" style={{ textDecoration: 'none' }}>
             <div className="kpi-label-row">
               <span className="kpi-title">DAILY LOANS</span>
             </div>
             <span className="kpi-value" style={{ color: '#1d4ed8' }}>{currency.format(dailyLoansPrincipal)}</span>
             <span className="kpi-subtext">{dailyLoans.length} accounts ledgered ({currency.format(dailyLoansPrincipal)})</span>
-          </Link>
-
-          {/* 10. DUE TODAY */}
-          <Link to="/reminders" className="kpi-card warning-card" style={{ textDecoration: 'none' }}>
-            <div className="kpi-label-row">
-              <span className="kpi-title">DUE TODAY</span>
-            </div>
-            <span className="kpi-value" style={{ color: '#b45309' }}>{currency.format(dueTodayAmount)}</span>
-            <span className="kpi-subtext">{dueTodayCount} installment obligations due today</span>
-          </Link>
-
-          {/* 11. OVERDUE */}
-          <Link to="/reminders" className="kpi-card danger-card" style={{ textDecoration: 'none' }}>
-            <div className="kpi-label-row">
-              <span className="kpi-title">OVERDUE</span>
-            </div>
-            <span className="kpi-value text-danger">{currency.format(overdueAmount)}</span>
-            <span className="kpi-subtext">{overdueCount} installments past due date</span>
           </Link>
         </div>
       )}
