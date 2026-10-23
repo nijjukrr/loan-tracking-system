@@ -23,8 +23,11 @@ export function AppLayout({ onSignOut, onOpenNewLoan }: Props) {
 
   return (
     <div className="app-shell">
+      <a href="#main-content" className="skip-link" style={{ position: 'absolute', top: '-40px', left: 0, background: '#16803c', color: '#fff', padding: '8px', zIndex: 100, transition: 'top 0.2s' }} onFocus={(e) => { e.currentTarget.style.top = '0px'; }} onBlur={(e) => { e.currentTarget.style.top = '-40px'; }}>
+        Skip to main content
+      </a>
       {/* Mobile Top Header */}
-      <header className="mobile-bar">
+      <header className="mobile-bar" role="banner">
         <button
           className="menu-toggle"
           type="button"
@@ -141,6 +144,22 @@ export function AppLayout({ onSignOut, onOpenNewLoan }: Props) {
 
           <NavLink
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+            to="/funds/monthly"
+            onClick={closeMenu}
+          >
+            <span>🎯</span> Monthly Fund
+          </NavLink>
+
+          <NavLink
+            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+            to="/funds/sweet"
+            onClick={closeMenu}
+          >
+            <span>🪔</span> Sweet Fund
+          </NavLink>
+
+          <NavLink
+            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
             to="/reconciliation"
             onClick={closeMenu}
           >
@@ -190,7 +209,7 @@ export function AppLayout({ onSignOut, onOpenNewLoan }: Props) {
 
       {mobileMenuOpen && <div className="mobile-overlay" onClick={closeMenu} role="presentation" />}
 
-      <main className="content">
+      <main id="main-content" className="content" tabIndex={-1}>
         <Outlet />
       </main>
     </div>
