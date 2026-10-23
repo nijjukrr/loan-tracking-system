@@ -73,35 +73,33 @@ export function DashboardPage({ onOpenNewLoan }: Props) {
           {/* Main KPI Grid */}
           <section className="metrics-grid main-metrics-grid">
             <div className="metric-card highlight-card">
-              <span>Total Money Lent</span>
-              <strong>{currency.format(metrics.totalMoneyLent)}</strong>
-              <small>
-                Daily: {currency.format(metrics.dailyMoneyLent)} · Weekly: {currency.format(metrics.weeklyMoneyLent)}
-              </small>
+              <span>Outstanding</span>
+              <strong>{currency.format(metrics.outstanding)}</strong>
+              <small>Open loan balance per the ledger summary</small>
             </div>
 
             <div className="metric-card">
-              <span>Total Collected</span>
-              <strong>{currency.format(metrics.totalCollected)}</strong>
-              <small>All repayments & collections</small>
+              <span>Credit Grand Total</span>
+              <strong>{currency.format(metrics.creditGrandTotal)}</strong>
+              <small>Ledger credit total</small>
             </div>
 
             <div className="metric-card success-card">
-              <span>Daily Profit</span>
-              <strong>{currency.format(metrics.dailyProfit)}</strong>
-              <small>Interest actually received</small>
+              <span>Loan Received</span>
+              <strong>{currency.format(metrics.loanReceived)}</strong>
+              <small>Shown separately from outstanding</small>
             </div>
 
             <div className="metric-card success-card">
-              <span>Weekly Closed Profit</span>
-              <strong>{currency.format(metrics.weeklyProfit)}</strong>
-              <small>Recognized after account closure</small>
+              <span>CIB · Cash in Bank</span>
+              <strong>{currency.format(metrics.cashInBank)}</strong>
+              <small>Recorded CIB amount</small>
             </div>
 
             <div className="metric-card success-card">
-              <span>10% Profit</span>
-              <strong>{currency.format(metrics.tenPercentProfit)}</strong>
-              <small>Manual and imported entries</small>
+              <span>Money Lent</span>
+              <strong>{currency.format(metrics.totalMoneyLent)}</strong>
+              <small>Daily: {currency.format(metrics.dailyMoneyLent)} · Weekly: {currency.format(metrics.weeklyMoneyLent)}</small>
             </div>
 
             <div className="metric-card">

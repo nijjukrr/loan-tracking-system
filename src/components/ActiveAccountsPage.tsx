@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { financeApi } from '../lib/financeApi'
-import { calculateNextDueDate, formatDateISO } from '../lib/financeLogic'
 import type { Loan, ModeKind } from '../types'
 import { MarkPaidModal } from './MarkPaidModal'
 
@@ -19,29 +18,27 @@ export function ActiveAccountsPage({ onOpenNewLoan }: Props) {
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null)
   const [showPayModal, setShowPayModal] = useState(false)
 
-  const loadData = () => {
+  const loadData = useCallback(() => {
     setLoading(true)
     const mode = modeFilter === 'ALL' ? undefined : modeFilter
     financeApi
-      .listLoans({ status: 'active', mode, search })
+      .listLoans({ mode, search })
       .then((data) => setLoans(data))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false))
-  }
+  }, [modeFilter, search])
 
   useEffect(() => {
     loadData()
-  }, [modeFilter, search])
-
-  const todayStr = formatDateISO(new Date())
+  }, [loadData])
 
   return (
     <>
       <header className="page-header">
         <div>
           <p className="eyebrow">Portfolio</p>
-          <h1>Active Accounts</h1>
-          <p className="page-description">Overview of all active open loans across Daily and Weekly modes.</p>
+          <h1>Loan Accounts</h1>
+          <p className="page-description">Each debit entry is shown separately, including multiple entries for the same person. Green means cleared in the source ledger.</p>
         </div>
         <div className="header-actions">
           <button className="primary-button" type="button" onClick={onOpenNewLoan}>
@@ -51,9 +48,9 @@ export function ActiveAccountsPage({ onOpenNewLoan }: Props) {
       </header>
 
       <section className="search-bar-card filters-row">
-        <input
+          <input
           type="search"
-          placeholder="Search active accounts by Person…"
+          placeholder="Search accounts by Person…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -68,8 +65,8 @@ export function ActiveAccountsPage({ onOpenNewLoan }: Props) {
       <section className="table-card">
         <div className="table-heading">
           <div>
-            <h2>Open Accounts ({loans.length})</h2>
-            <p>Active Money Lent: {currency.format(loans.reduce((sum, l) => sum + l.principal, 0))}</p>
+            <h2>Individual Debit Entries ({loans.length})</h2>
+            <p>Total of listed entries: {currency.format(loans.reduce((sum, l) => sum + l.principal, 0))}</p>
           </div>
         </div>
 
@@ -83,22 +80,16 @@ export function ActiveAccountsPage({ onOpenNewLoan }: Props) {
               <thead>
                 <tr>
                   <th>Person Name</th>
-                  <th>Mode</th>
                   <th className="amount-cell">Principal</th>
-                  <th>Start Date</th>
-                  <th>Next Due</th>
-                  <th className="amount-cell">Amount Due</th>
+                  <th>Loan Date</th>
                   <th className="amount-cell">Collected</th>
-                  <th>Status</th>
+                  <th>Ledger Status</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {loans.map((loan) => {
-                  const nextDue = calculateNextDueDate(loan.mode, loan.loan_date)
-                  const isOverdue = nextDue < todayStr
-                  const isDueToday = nextDue === todayStr
-                  const amountDue = loan.mode === 'D' ? loan.interest_amount : loan.weekly_payment
+                  const isCleared = loan.source_paid || loan.status === 'closed'
 
                   return (
                     <tr key={loan.id}>
@@ -107,32 +98,12 @@ export function ActiveAccountsPage({ onOpenNewLoan }: Props) {
                           {loan.customer_name}
                         </Link>
                       </td>
-                      <td>
-                        <span className="source-badge">{loan.mode === 'D' ? 'Daily' : 'Weekly'}</span>
-                      </td>
                       <td className="amount-cell">{currency.format(loan.principal)}</td>
                       <td>{loan.loan_date}</td>
-                      <td>
-                        <span className={`due-tag ${isOverdue ? 'overdue' : isDueToday ? 'due-today' : 'upcoming'}`}>
-                          {nextDue}
-                        </span>
-                      </td>
-                      <td className="amount-cell">{currency.format(amountDue)}</td>
                       <td className="amount-cell">{currency.format(loan.total_collected)}</td>
+                      <td><span className={`status-badge ${isCleared ? 'paid' : 'active'}`}>{isCleared ? 'CLEARED' : 'OUTSTANDING'}</span></td>
                       <td>
-                        <span className="status-badge active">ACTIVE</span>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="secondary-button compact-button"
-                          onClick={() => {
-                            setSelectedLoan(loan)
-                            setShowPayModal(true)
-                          }}
-                        >
-                          Mark Paid
-                        </button>
+                        {isCleared ? <span className="text-success">✓ Paid</span> : <button type="button" className="secondary-button compact-button" onClick={() => { setSelectedLoan(loan); setShowPayModal(true) }}>Mark Paid</button>}
                       </td>
                     </tr>
                   )
