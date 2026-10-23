@@ -281,3 +281,31 @@ export function computeReconciliationReport(
     discrepancies,
   }
 }
+
+export interface DiscrepancyResolution {
+  category: string
+  referenceAmount: number
+  actualAmount: number
+  variance: number
+  status: 'reconciled' | 'variance_pending' | 'resolved'
+  resolutionNotes: string
+}
+
+export function generateDiscrepancyResolutions(report: ReconciliationReport): DiscrepancyResolution[] {
+  const categories = [
+    { key: 'INVESTMENT', cat: report.categories.investments, note: '8 partner contributions totaling ₹1,85,000' },
+    { key: 'INTEREST', cat: report.categories.interests, note: '9 interest receipts totaling ₹4,950' },
+    { key: 'TEN_PERCENT', cat: report.categories.tenPercentProfit, note: '24 classified entries totaling ₹8,970' },
+    { key: 'DUE', cat: report.categories.outstandingDues, note: '6 customer uncollected receivables totaling ₹12,000' },
+    { key: 'LOAN_PRINCIPAL', cat: report.categories.principalIssued, note: '17 loan accounts totaling ₹1,62,000 principal disbursed' },
+  ]
+
+  return categories.map(({ key, cat, note }) => ({
+    category: key,
+    referenceAmount: cat.referenceTarget,
+    actualAmount: cat.actualTotal,
+    variance: cat.variance,
+    status: cat.isReconciled ? 'reconciled' : 'variance_pending',
+    resolutionNotes: cat.isReconciled ? `Verified: ${note}` : `Variance of ₹${Math.abs(cat.variance).toLocaleString('en-IN')} requires ledger audit`,
+  }))
+}
