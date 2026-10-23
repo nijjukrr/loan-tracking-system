@@ -6,7 +6,7 @@ export function AuditTrailPage() {
   const [logs, setLogs] = useState<AuditLogEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [typeFilter, setTypeFilter] = useState<'ALL' | 'loan' | 'payment' | 'due_receivable' | 'main_transaction'>('ALL')
+  const [typeFilter, setTypeFilter] = useState<'ALL' | 'WORKBOOK' | 'loan' | 'payment' | 'due_receivable' | 'MONTHLY_FUND' | 'main_transaction'>('ALL')
 
   const loadLogs = useCallback(() => {
     setLoading(true)
@@ -71,9 +71,11 @@ export function AuditTrailPage() {
             style={{ padding: '0.5rem 0.75rem', border: '1px solid var(--line)', borderRadius: '6px' }}
           >
             <option value="ALL">All Entity Types</option>
+            <option value="WORKBOOK">Workbook Imports</option>
             <option value="loan">Loans</option>
             <option value="payment">Payments</option>
             <option value="due_receivable">Customer Dues</option>
+            <option value="MONTHLY_FUND">Monthly Fund</option>
             <option value="main_transaction">Main Transactions</option>
           </select>
         </div>
