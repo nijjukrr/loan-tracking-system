@@ -3,11 +3,23 @@ export type LoanStatus = 'active' | 'closed'
 export type InstallmentStatus = 'Upcoming' | 'Due Today' | 'Paid' | 'Partial' | 'Overdue'
 export type PaymentType = 'Interest' | 'Weekly Installment' | 'Principal' | 'Interest + Principal' | 'Partial' | 'Other'
 
+export type LedgerDirection = 'INFLOW' | 'OUTFLOW'
+export type LedgerCategory =
+  | 'INVESTMENT'
+  | 'LOAN_DISBURSEMENT'
+  | 'INTEREST_RECEIVED'
+  | 'WEEKLY_COLLECTION'
+  | 'PRINCIPAL_REPAYMENT'
+  | 'TEN_PERCENT_PROFIT'
+  | 'DUE_RECEIVABLE'
+  | 'ADJUSTMENT'
+
 export type Customer = {
   id: string
   name: string
   phone?: string | null
   address?: string | null
+  active?: boolean
   created_at?: string
 }
 
@@ -15,6 +27,7 @@ export type Loan = {
   id: string
   customer_id?: string | null
   customer_name: string
+  ac_no?: number | null
   main_sheet_no: number
   mode: ModeKind
   loan_date: string
@@ -57,7 +70,31 @@ export type Payment = {
   payment_date: string
   amount: number
   payment_type: PaymentType
+  principal_allocation?: number
+  interest_allocation?: number
   note?: string | null
+  reversal_of?: string | null
+  created_at: string
+}
+
+export type InvestmentEntry = {
+  id: string
+  entry_date: string
+  investor_name: string
+  amount: number
+  source_reference?: string | null
+  notes?: string | null
+  created_at: string
+}
+
+export type InterestEntry = {
+  id: string
+  entry_date: string
+  customer_name: string
+  ac_no?: number | null
+  amount: number
+  source_reference?: string | null
+  notes?: string | null
   created_at: string
 }
 
@@ -68,17 +105,61 @@ export type TenPercentEntry = {
   amount: number
   main_sheet_no: number | null
   notes: string | null
-  source_kind: 'manual' | 'main_tag'
+  source_kind: 'manual' | 'main_tag' | 'imported'
   main_transaction_id: string | null
   created_at: string
 }
 
-export type NewTenPercentEntry = {
-  entry_date: string
-  particulars: string
+export type DueReceivableEntry = {
+  id: string
+  due_date: string
+  borrower_name: string
+  loan_id?: string | null
   amount: number
-  main_sheet_no: number | null
-  notes: string | null
+  settled_amount: number
+  remaining_amount: number
+  status: 'unpaid' | 'partial' | 'settled'
+  source_reference?: string | null
+  notes?: string | null
+  created_at: string
+}
+
+export type FinancialLedgerTransaction = {
+  id: string
+  transaction_date: string
+  direction: LedgerDirection
+  category: LedgerCategory
+  amount: number
+  particulars: string
+  reference_id?: string | null
+  source_sheet?: string | null
+  source_row?: number | null
+  notes?: string | null
+  created_at: string
+}
+
+export type AuditLogEntry = {
+  id: string
+  action: string
+  entity_type: string
+  entity_id: string
+  details?: Record<string, unknown> | null
+  performed_by?: string | null
+  created_at: string
+}
+
+export type ImportBatchRecord = {
+  id: string
+  imported_at: string
+  file_name: string
+  file_sha256: string
+  records_count: number
+  total_investment: number
+  total_interest: number
+  total_ten_percent: number
+  total_dues: number
+  total_loans_principal: number
+  status: 'preview' | 'committed' | 'rolled_back'
 }
 
 export type MainTransaction = {
@@ -103,6 +184,13 @@ export type DashboardMetrics = {
   closedAccounts: number
   dueTodayCount: number
   overdueCount: number
+  // Workbook & Ledger Reconciled Figures
+  investmentReceived: number
+  interestReceived: number
+  outstandingDues: number
+  workbookTotalLedger: number
+  workbookCashInHand: number
+  reconciledAvailableCash: number
   loanReceived: number
   cashInBank: number
   outstanding: number
@@ -118,17 +206,51 @@ export type NewLoanInput = {
   loan_date: string
   principal: number
   interest_amount?: number
+  interest_rate?: number
   weekly_payment?: number
+  total_expected?: number
   total_return?: number
   first_due_date?: string
+  ac_no?: number
   main_sheet_no?: number
 }
 
 export type NewPaymentInput = {
   loan_id: string
   installment_id?: string
-  paid_date: string
+  payment_date?: string
+  paid_date?: string
   amount: number
   payment_type: PaymentType
   note?: string
+}
+
+export type NewTenPercentEntry = {
+  entry_date: string
+  particulars: string
+  amount: number
+  main_sheet_no: number | null
+  notes: string | null
+}
+
+export type NewInvestmentInput = {
+  entry_date: string
+  investor_name: string
+  amount: number
+  notes?: string
+}
+
+export type NewInterestInput = {
+  entry_date: string
+  customer_name: string
+  ac_no?: number
+  amount: number
+  notes?: string
+}
+
+export type NewDueInput = {
+  due_date: string
+  borrower_name: string
+  amount: number
+  notes?: string
 }

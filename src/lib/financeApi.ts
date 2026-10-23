@@ -343,6 +343,7 @@ class LocalPreviewFinanceApi implements FinanceApi {
       ? loanInsts.find((i) => i.id === input.installment_id)
       : loanInsts.find((i) => i.status !== 'Paid') || loanInsts[0]
 
+    const effectivePaidDate = input.paid_date || input.payment_date || formatDateISO(new Date())
     const paymentAmount = Number(input.amount)
     const newPayment: Payment = {
       id: `pay-${Date.now()}`,
@@ -351,7 +352,7 @@ class LocalPreviewFinanceApi implements FinanceApi {
       customer_name: loan.customer_name,
       main_sheet_no: loan.main_sheet_no,
       mode: loan.mode,
-      payment_date: input.paid_date,
+      payment_date: effectivePaidDate,
       amount: paymentAmount,
       payment_type: input.payment_type,
       note: input.note?.trim() || null,
@@ -360,14 +361,14 @@ class LocalPreviewFinanceApi implements FinanceApi {
 
     // Update target installment
     if (targetInst) {
-      targetInst.paid_date = input.paid_date
+      targetInst.paid_date = effectivePaidDate
       targetInst.paid_amount += paymentAmount
       targetInst.status = getInstallmentStatus(targetInst.due_date, targetInst.paid_date, targetInst.paid_amount, targetInst.expected_amount)
       targetInst.updated_at = new Date().toISOString()
     }
 
     // Recalculate next due date for subsequent unpaid installments based on actual paid date
-    const nextDueDate = calculateNextDueDate(loan.mode, input.paid_date)
+    const nextDueDate = calculateNextDueDate(loan.mode, effectivePaidDate)
     let nextInstIndex = loanInsts.findIndex((i) => i.id === targetInst?.id) + 1
     if (nextInstIndex > 0 && nextInstIndex < loanInsts.length) {
       loanInsts[nextInstIndex].due_date = nextDueDate
@@ -596,7 +597,7 @@ class SupabaseFinanceApi implements FinanceApi {
     const { data, error } = await supabase!.rpc('record_loan_payment', {
       p_loan_id: input.loan_id,
       p_installment_id: input.installment_id || null,
-      p_paid_date: input.paid_date,
+      p_paid_date: input.paid_date || input.payment_date || formatDateISO(new Date()),
       p_amount: Number(input.amount),
       p_payment_type: input.payment_type,
       p_note: input.note?.trim() || null,

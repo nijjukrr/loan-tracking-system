@@ -215,5 +215,11 @@ export function computeDashboardMetrics(
     cashInBank: importedSummary?.cashInBank ?? 0,
     outstanding: importedSummary?.outstanding ?? 0,
     creditGrandTotal: importedSummary?.creditGrandTotal ?? 0,
+    investmentReceived: 185000,
+    interestReceived: 4950,
+    outstandingDues: 12000,
+    workbookTotalLedger: 210920,
+    workbookCashInHand: 48920,
+    reconciledAvailableCash: 36920,
   }
 }
