@@ -107,9 +107,9 @@ export interface FinanceApi {
   clearAllData(): Promise<void>
 }
 
-const STORAGE_KEY_LOANS = 'finance-tracker-loans-v6'
-const STORAGE_KEY_INSTALLMENTS = 'finance-tracker-installments-v6'
-const STORAGE_KEY_PAYMENTS = 'finance-tracker-payments-v6'
+const STORAGE_KEY_LOANS = 'finance-tracker-loans-v20'
+const STORAGE_KEY_INSTALLMENTS = 'finance-tracker-installments-v20'
+const STORAGE_KEY_PAYMENTS = 'finance-tracker-payments-v20'
 const STORAGE_KEY_TEN_PERCENT = 'finance-tracker-ten-percent-v6'
 const STORAGE_KEY_MAIN_TX = 'finance-tracker-main-tx-v6'
 const STORAGE_KEY_INVESTMENTS = 'finance-tracker-investments-v6'
@@ -118,12 +118,12 @@ const STORAGE_KEY_DUES = 'finance-tracker-dues-v6'
 const STORAGE_KEY_CUSTOMERS = 'finance-tracker-customers-v6'
 const STORAGE_KEY_LEDGER = 'finance-tracker-ledger-v6'
 const STORAGE_KEY_AUDIT = 'finance-tracker-audit-v6'
-const STORAGE_KEY_MONTHLY_MEMBERS = 'finance-tracker-mf-members-v6'
-const STORAGE_KEY_MONTHLY_COLLECTIONS = 'finance-tracker-mf-colls-v6'
-const STORAGE_KEY_SWEET_PROGRAMME = 'finance-tracker-sf-prog-v6'
-const STORAGE_KEY_SWEET_MEMBERS = 'finance-tracker-sf-members-v6'
-const STORAGE_KEY_SWEET_INSTALLMENTS = 'finance-tracker-sf-insts-v6'
-const STORAGE_KEY_SWEET_PAYMENTS = 'finance-tracker-sf-payments-v6'
+const STORAGE_KEY_MONTHLY_MEMBERS = 'finance-tracker-mf-members-v20'
+const STORAGE_KEY_MONTHLY_COLLECTIONS = 'finance-tracker-mf-colls-v20'
+const STORAGE_KEY_SWEET_PROGRAMME = 'finance-tracker-sf-prog-v20'
+const STORAGE_KEY_SWEET_MEMBERS = 'finance-tracker-sf-members-v20'
+const STORAGE_KEY_SWEET_INSTALLMENTS = 'finance-tracker-sf-insts-v20'
+const STORAGE_KEY_SWEET_PAYMENTS = 'finance-tracker-sf-payments-v20'
 
 type RawImportLoan = {
   mainSheetNo: number
@@ -308,53 +308,56 @@ function buildInitialData() {
     created_at: due.created_at || new Date().toISOString(),
   }))
 
-  // Initial Monthly Fund Members (Specified Targets: MEDICALS ₹9,800, RAMS ₹9,500, CHERAN ₹19,000, PORI ₹9,500 = ₹47,800)
+  // Initial Monthly Fund Members - 4 specified members with targets totaling ₹37,800
   const monthlyFundMembers: MonthlyFundMember[] = [
     {
-      id: 'mf-1',
-      name: 'MEDICALS',
+      id: 'mf-1-rams',
+      name: 'RAMS',
+      target_amount: 9500,
+      suggested_collection: 400,
+      total_collected: 0,
+      remaining_amount: 9500,
+      status: 'active',
+      notes: 'Monthly fund member • Suggested collection: ₹400',
+      created_at: '2026-10-23T07:36:15.086Z',
+    },
+    {
+      id: 'mf-2-puri',
+      name: 'PURI',
+      target_amount: 9500,
+      suggested_collection: 500,
+      total_collected: 0,
+      remaining_amount: 9500,
+      status: 'active',
+      notes: 'Monthly fund member • Suggested collection: ₹500',
+      created_at: '2026-10-23T07:36:15.086Z',
+    },
+    {
+      id: 'mf-3-cherran',
+      name: 'CHERRAN',
+      target_amount: 9000,
+      suggested_collection: 700,
+      total_collected: 0,
+      remaining_amount: 9000,
+      status: 'active',
+      notes: 'Monthly fund member • Suggested collection: ₹700',
+      created_at: '2026-10-23T07:36:15.086Z',
+    },
+    {
+      id: 'mf-4-medical',
+      name: 'MEDICAL',
       target_amount: 9800,
+      suggested_collection: 300,
       total_collected: 0,
       remaining_amount: 9800,
       status: 'active',
-      notes: 'Initial target member (specified)',
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: 'mf-2',
-      name: 'RAMS',
-      target_amount: 9500,
-      total_collected: 0,
-      remaining_amount: 9500,
-      status: 'active',
-      notes: 'Initial target member (specified)',
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: 'mf-3',
-      name: 'CHERAN',
-      target_amount: 19000,
-      total_collected: 0,
-      remaining_amount: 19000,
-      status: 'active',
-      notes: 'Initial target member (specified)',
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: 'mf-4',
-      name: 'PORI',
-      target_amount: 9500,
-      total_collected: 0,
-      remaining_amount: 9500,
-      status: 'active',
-      notes: 'Initial target member (specified)',
-      created_at: new Date().toISOString(),
+      notes: 'Monthly fund member • Suggested collection: ₹300',
+      created_at: '2026-10-23T07:36:15.086Z',
     },
   ]
-
   const monthlyFundCollections: MonthlyFundCollection[] = []
 
-  // Default Sweet Fund Programme (50 members, 50 weeks; W1: ₹500, W2-50: ₹200; Target: ₹10,300/member, Total: ₹5,15,000)
+  // Default Sweet Fund Programme - 50-week scheme configuration with 0 enrolled members initially
   const sweetFundProgramme: SweetFundProgramme = {
     id: 'sweet-fund-2026-2027',
     name: 'Diwali Sweet Fund 2026-2027',
@@ -365,7 +368,7 @@ function buildInitialData() {
     target_per_member: 10300,
     total_target: 515000,
     start_date: '2026-11-01',
-    target_end_date: '2027-10-29', // Diwali deadline
+    target_end_date: '2027-10-29',
     is_active: true,
   }
 
@@ -526,22 +529,31 @@ function setStorageItem(key: string, value: string): void {
   memoryStore.set(key, value)
 }
 
+export function resetLocalStore(): void {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.clear()
+    }
+  } catch {
+    // Ignore in non-browser context
+  }
+  memoryStore.clear()
+}
+
 function purgeLegacyStores() {
   if (typeof window === 'undefined' || !window.localStorage) return
   try {
-    const legacyKeys = [
-      'finance-tracker-loans-v1',
-      'finance-tracker-loans-v2',
-      'finance-tracker-loans-v3',
-      'finance-tracker-loans-v4',
-      'finance-tracker-loans-v5',
+    const legacyPrefixes = [
+      'finance-tracker-loans',
+      'finance-tracker-mf-',
+      'finance-tracker-sf-',
+      'finance-tracker-payments',
+      'finance-tracker-installments',
     ]
-    for (const prefix of legacyKeys) {
-      for (let i = window.localStorage.length - 1; i >= 0; i--) {
-        const k = window.localStorage.key(i)
-        if (k && k.startsWith(prefix)) {
-          window.localStorage.removeItem(k)
-        }
+    for (let i = window.localStorage.length - 1; i >= 0; i--) {
+      const k = window.localStorage.key(i)
+      if (k && legacyPrefixes.some((p) => k.startsWith(p)) && !k.endsWith('-v20')) {
+        window.localStorage.removeItem(k)
       }
     }
   } catch {
@@ -565,7 +577,7 @@ function getLocalStore() {
 
   let loans = safeParse<Loan[]>(STORAGE_KEY_LOANS, initial.loans)
   let installments = safeParse<Installment[]>(STORAGE_KEY_INSTALLMENTS, initial.installments)
-  const payments = safeParse<Payment[]>(STORAGE_KEY_PAYMENTS, initial.payments)
+  let payments = safeParse<Payment[]>(STORAGE_KEY_PAYMENTS, initial.payments)
   let tenPercentEntries = safeParse<TenPercentEntry[]>(STORAGE_KEY_TEN_PERCENT, initial.tenPercentEntries)
   let mainTransactions = safeParse<MainTransaction[]>(STORAGE_KEY_MAIN_TX, initial.mainTransactions)
   let investments = safeParse<InvestmentEntry[]>(STORAGE_KEY_INVESTMENTS, initial.investments)
@@ -858,12 +870,24 @@ export class LocalPreviewFinanceApi implements FinanceApi {
       }
       updatedLoan.total_collected += paymentAmount
       updatedLoan.remaining_balance = Math.max(0, updatedLoan.remaining_balance - paymentAmount)
-      const allPaid = updatedInsts
-        .filter((i) => i.loan_id === loan.id)
-        .every((i) => i.status === 'Paid')
-      if (allPaid && loan.mode === 'W') {
+      if (updatedLoan.remaining_balance <= 0 && loan.mode === 'W') {
         updatedLoan.status = 'closed'
         updatedLoan.closed_at = effectivePaidDate
+        updatedInsts
+          .filter((i) => i.loan_id === loan.id)
+          .forEach((i) => {
+            i.status = 'Paid'
+            i.paid_amount = i.expected_amount
+            i.paid_date = effectivePaidDate
+          })
+      } else {
+        const allPaid = updatedInsts
+          .filter((i) => i.loan_id === loan.id)
+          .every((i) => i.status === 'Paid')
+        if (allPaid && loan.mode === 'W') {
+          updatedLoan.status = 'closed'
+          updatedLoan.closed_at = effectivePaidDate
+        }
       }
     }
 
