@@ -19,6 +19,8 @@ import { ReportsPage } from './components/ReportsPage'
 import { AuditTrailPage } from './components/AuditTrailPage'
 import { MonthlyFundPage } from './components/MonthlyFundPage'
 import { SweetFundPage } from './components/SweetFundPage'
+import { TotalIncomePage } from './components/TotalIncomePage'
+import { DuePage } from './components/DuePage'
 import { NewLoanModal } from './components/NewLoanModal'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import './App.css'
@@ -67,6 +69,9 @@ function App() {
           }
         >
           <Route index element={<DashboardPage key={`dash-${refreshKey}`} onOpenNewLoan={() => setShowNewLoanModal(true)} />} />
+          <Route path="/total-income" element={<TotalIncomePage key={`inc-${refreshKey}`} />} />
+          <Route path="/due" element={<DuePage key={`due-${refreshKey}`} />} />
+          <Route path="/dues" element={<DuePage key={`dues-${refreshKey}`} />} />
           <Route path="/daily" element={<DailyPage key={`daily-${refreshKey}`} onOpenNewLoan={() => setShowNewLoanModal(true)} />} />
           <Route path="/weekly" element={<WeeklyPage key={`weekly-${refreshKey}`} onOpenNewLoan={() => setShowNewLoanModal(true)} />} />
           <Route path="/reminders" element={<RemindersPage key={`rem-${refreshKey}`} />} />
@@ -75,10 +80,13 @@ function App() {
           <Route path="/closed-accounts" element={<ClosedAccountsPage key={`closed-${refreshKey}`} />} />
           <Route path="/borrower/:id" element={<BorrowerDetailPage key={`bdet-${refreshKey}`} />} />
           <Route path="/profit/ten-percent" element={<TenPercentPage key={`ten-${refreshKey}`} />} />
+          <Route path="/profit" element={<TenPercentPage key={`prof-${refreshKey}`} />} />
+          <Route path="/ten-percent" element={<TenPercentPage key={`tenp-${refreshKey}`} />} />
           <Route path="/reconciliation" element={<ReconciliationPage key={`rec-${refreshKey}`} />} />
           <Route path="/borrowers" element={<CustomersPage key={`cust-${refreshKey}`} />} />
           <Route path="/customers" element={<CustomersPage key={`cust2-${refreshKey}`} />} />
           <Route path="/investments" element={<InvestmentsPage key={`inv-${refreshKey}`} />} />
+          <Route path="/invest" element={<InvestmentsPage key={`inv2-${refreshKey}`} />} />
           <Route path="/interest" element={<InterestPage key={`int-${refreshKey}`} />} />
           <Route path="/reports" element={<ReportsPage key={`rep-${refreshKey}`} />} />
           <Route path="/audit" element={<AuditTrailPage key={`aud-${refreshKey}`} />} />

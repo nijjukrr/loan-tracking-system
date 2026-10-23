@@ -1,31 +1,22 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { financeApi } from '../lib/financeApi'
-import { isSupabaseConfigured } from '../lib/supabase'
 
 type Props = {
   onSignOut?: () => void
-  onOpenNewLoan: () => void
+  onOpenNewLoan?: () => void
 }
 
-export function AppLayout({ onSignOut, onOpenNewLoan }: Props) {
+export function AppLayout({ onSignOut: _onSignOut, onOpenNewLoan: _onOpenNewLoan }: Props) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const closeMenu = () => setMobileMenuOpen(false)
-
-  const handleResetData = async () => {
-    if (!window.confirm('Are you sure you want to remove all existing loan and payment data? This will reset the tracker to a clean slate.')) {
-      return
-    }
-    await financeApi.clearAllData()
-    window.location.reload()
-  }
 
   return (
     <div className="app-shell">
       <a href="#main-content" className="skip-link" style={{ position: 'absolute', top: '-40px', left: 0, background: '#16803c', color: '#fff', padding: '8px', zIndex: 100, transition: 'top 0.2s' }} onFocus={(e) => { e.currentTarget.style.top = '0px'; }} onBlur={(e) => { e.currentTarget.style.top = '-40px'; }}>
         Skip to main content
       </a>
+
       {/* Mobile Top Header */}
       <header className="mobile-bar" role="banner">
         <button
@@ -40,9 +31,6 @@ export function AppLayout({ onSignOut, onOpenNewLoan }: Props) {
           <span>FT</span>
           <strong>Finance Tracker</strong>
         </div>
-        <button className="primary-button compact-button" type="button" onClick={onOpenNewLoan}>
-          + Loan
-        </button>
       </header>
 
       {/* Sidebar */}
@@ -52,7 +40,7 @@ export function AppLayout({ onSignOut, onOpenNewLoan }: Props) {
           <strong>Finance Tracker</strong>
         </div>
 
-        <nav aria-label="Main navigation">
+        <nav aria-label="Main navigation" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
           <NavLink
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
             to="/"
@@ -61,39 +49,63 @@ export function AppLayout({ onSignOut, onOpenNewLoan }: Props) {
           >
             <span>📊</span> Dashboard
           </NavLink>
+          <NavLink
+            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+            to="/total-income"
+            onClick={closeMenu}
+          >
+            <span>📈</span> Total Income
+          </NavLink>
 
+          <div className="nav-section-label" style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0.75rem 0 0.25rem 0.5rem' }}>
+            Capital & Revenue
+          </div>
+          <NavLink
+            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+            to="/investments"
+            onClick={closeMenu}
+          >
+            <span>💼</span> Invest
+          </NavLink>
+          <NavLink
+            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+            to="/interest"
+            onClick={closeMenu}
+          >
+            <span>💰</span> Interest
+          </NavLink>
+          <NavLink
+            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+            to="/profit/ten-percent"
+            onClick={closeMenu}
+          >
+            <span>🏷️</span> 10% Profit
+          </NavLink>
+          <NavLink
+            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+            to="/due"
+            onClick={closeMenu}
+          >
+            <span>⏳</span> Due Ledger
+          </NavLink>
+
+          <div className="nav-section-label" style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0.75rem 0 0.25rem 0.5rem' }}>
+            Lending Management
+          </div>
           <NavLink
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
             to="/daily"
             onClick={closeMenu}
           >
-            <span>📅</span> Daily (10-Day)
+            <span>📅</span> Daily Loans
           </NavLink>
-
           <NavLink
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
             to="/weekly"
             onClick={closeMenu}
           >
-            <span>🗓️</span> Weekly (10-Wk)
+            <span>📆</span> Weekly Loans
           </NavLink>
-
-          <NavLink
-            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-            to="/reminders"
-            onClick={closeMenu}
-          >
-            <span>🔔</span> Reminders
-          </NavLink>
-
-          <NavLink
-            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-            to="/payments"
-            onClick={closeMenu}
-          >
-            <span>💳</span> Payments
-          </NavLink>
-
           <NavLink
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
             to="/active-accounts"
@@ -101,7 +113,13 @@ export function AppLayout({ onSignOut, onOpenNewLoan }: Props) {
           >
             <span>📂</span> Active Accounts
           </NavLink>
-
+          <NavLink
+            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+            to="/closed-accounts"
+            onClick={closeMenu}
+          >
+            <span>📁</span> Closed Accounts
+          </NavLink>
           <NavLink
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
             to="/borrowers"
@@ -110,46 +128,30 @@ export function AppLayout({ onSignOut, onOpenNewLoan }: Props) {
             <span>👥</span> Borrowers
           </NavLink>
 
+          <div className="nav-section-label" style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0.75rem 0 0.25rem 0.5rem' }}>
+            Collections & Funds
+          </div>
           <NavLink
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-            to="/closed-accounts"
+            to="/payments"
             onClick={closeMenu}
           >
-            <span>📁</span> Closed Accounts
+            <span>💳</span> Payments & Receipts
           </NavLink>
-
           <NavLink
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-            to="/profit/ten-percent"
+            to="/reminders"
             onClick={closeMenu}
           >
-            <span>💰</span> 10% Profit
+            <span>🔔</span> Reminders
           </NavLink>
-
-          <NavLink
-            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-            to="/investments"
-            onClick={closeMenu}
-          >
-            <span>💼</span> Investments
-          </NavLink>
-
-          <NavLink
-            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-            to="/interest"
-            onClick={closeMenu}
-          >
-            <span>📈</span> Interest
-          </NavLink>
-
           <NavLink
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
             to="/funds/monthly"
             onClick={closeMenu}
           >
-            <span>🎯</span> Monthly Fund
+            <span>🤝</span> Monthly Fund
           </NavLink>
-
           <NavLink
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
             to="/funds/sweet"
@@ -158,6 +160,9 @@ export function AppLayout({ onSignOut, onOpenNewLoan }: Props) {
             <span>🪔</span> Sweet Fund
           </NavLink>
 
+          <div className="nav-section-label" style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0.75rem 0 0.25rem 0.5rem' }}>
+            Accounting & Audit
+          </div>
           <NavLink
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
             to="/reconciliation"
@@ -165,7 +170,6 @@ export function AppLayout({ onSignOut, onOpenNewLoan }: Props) {
           >
             <span>⚖️</span> Reconciliation
           </NavLink>
-
           <NavLink
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
             to="/reports"
@@ -173,7 +177,6 @@ export function AppLayout({ onSignOut, onOpenNewLoan }: Props) {
           >
             <span>📄</span> Reports & Exports
           </NavLink>
-
           <NavLink
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
             to="/audit"
@@ -182,29 +185,6 @@ export function AppLayout({ onSignOut, onOpenNewLoan }: Props) {
             <span>🛡️</span> Audit Trail
           </NavLink>
         </nav>
-
-        <div className="sidebar-action">
-          <button className="primary-button full-width" type="button" onClick={() => { closeMenu(); onOpenNewLoan(); }}>
-            + New Loan
-          </button>
-        </div>
-
-        <div className="sidebar-footer">
-          {!isSupabaseConfigured && <span className="preview-badge">Local excel preview</span>}
-          <button
-            className="text-button"
-            type="button"
-            style={{ color: '#ef4444', fontSize: '0.8125rem', marginTop: '0.5rem', display: 'block', width: '100%', textAlign: 'left' }}
-            onClick={handleResetData}
-          >
-            🗑️ Reset / Clear All Data
-          </button>
-          {onSignOut && (
-            <button className="text-button" type="button" onClick={onSignOut}>
-              Sign out
-            </button>
-          )}
-        </div>
       </aside>
 
       {mobileMenuOpen && <div className="mobile-overlay" onClick={closeMenu} role="presentation" />}
