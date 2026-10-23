@@ -260,7 +260,12 @@ export type DashboardMetrics = {
   activeAccounts: number
   closedAccounts: number
   dueTodayCount: number
+  dueTodayAmount?: number
   overdueCount: number
+  overdueAmount?: number
+  todayCollections?: number
+  principalDisbursed?: number
+  reconciliationDifference?: number
   // Workbook & Ledger Reconciled Figures
   investmentReceived: number
   interestReceived: number

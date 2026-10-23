@@ -650,7 +650,11 @@ export class LocalPreviewFinanceApi implements FinanceApi {
       store.loans,
       store.installments,
       store.payments,
-      store.tenPercentEntries
+      store.tenPercentEntries,
+      formatDateISO(new Date()),
+      store.investments,
+      store.interests,
+      store.dues
     )
   }
 
@@ -1080,11 +1084,14 @@ export class SupabaseFinanceApi implements FinanceApi {
   }
 
   async getDashboardMetrics(): Promise<DashboardMetrics> {
-    const [loansRes, instsRes, paysRes, tpRes] = await Promise.all([
+    const [loansRes, instsRes, paysRes, tpRes, invRes, intRes, dueRes] = await Promise.all([
       supabase!.from('loans').select('*'),
       supabase!.from('installments').select('*'),
       supabase!.from('payments').select('*'),
       supabase!.from('ten_percent_entries').select('*'),
+      supabase!.from('investment_entries').select('*'),
+      supabase!.from('interest_entries').select('*'),
+      supabase!.from('due_receivables').select('*'),
     ])
 
     if (loansRes.error) throw new Error(`Unable to load dashboard totals: ${loansRes.error.message}`)
@@ -1096,7 +1103,11 @@ export class SupabaseFinanceApi implements FinanceApi {
       loansRes.data || [],
       instsRes.data || [],
       paysRes.data || [],
-      tpRes.data || []
+      tpRes.data || [],
+      formatDateISO(new Date()),
+      invRes.data || [],
+      intRes.data || [],
+      dueRes.data || []
     )
   }
 

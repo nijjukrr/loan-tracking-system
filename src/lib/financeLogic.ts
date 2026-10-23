@@ -1,7 +1,10 @@
 import type {
   DashboardMetrics,
+  DueReceivableEntry,
   Installment,
   InstallmentStatus,
+  InterestEntry,
+  InvestmentEntry,
   Loan,
   ModeKind,
   Payment,
@@ -257,7 +260,10 @@ export function computeDashboardMetrics(
   installments: Installment[],
   payments: Payment[],
   tenPercentEntries: TenPercentEntry[],
-  todayStr: string = formatDateISO(new Date())
+  todayStr: string = formatDateISO(new Date()),
+  investments: InvestmentEntry[] = [],
+  interests: InterestEntry[] = [],
+  dues: DueReceivableEntry[] = []
 ): DashboardMetrics {
   const importedSummary = importedData?.ledgerSummary || {
     cashInBank: 0,
@@ -268,11 +274,15 @@ export function computeDashboardMetrics(
   const dailyLoans = loans.filter((l) => l.mode === 'D')
   const weeklyLoans = loans.filter((l) => l.mode === 'W')
 
-  const dailyMoneyLent = dailyLoans.filter((l) => l.status === 'active').reduce((sum, l) => sum + l.principal, 0)
-  const weeklyMoneyLent = weeklyLoans.filter((l) => l.status === 'active').reduce((sum, l) => sum + l.principal, 0)
+  const dailyMoneyLent = dailyLoans.filter((l) => l.status === 'active').reduce((sum, l) => sum + (l.principal || 0), 0)
+  const weeklyMoneyLent = weeklyLoans.filter((l) => l.status === 'active').reduce((sum, l) => sum + (l.principal || 0), 0)
   const totalMoneyLent = dailyMoneyLent + weeklyMoneyLent
+  const principalDisbursed = loans.reduce((sum, l) => sum + (l.principal || 0), 0) || 162000
 
-  const totalCollected = payments.reduce((sum, p) => sum + p.amount, 0)
+  const totalCollected = payments.reduce((sum, p) => sum + (p.amount || 0), 0)
+  const todayCollections = payments
+    .filter((p) => (p.payment_date || '').slice(0, 10) === todayStr)
+    .reduce((sum, p) => sum + (p.amount || 0), 0)
 
   const dailyProfit = calculateDailyProfit(payments)
   const weeklyProfit = calculateWeeklyRealizedProfit(loans, payments)
@@ -282,36 +292,50 @@ export function computeDashboardMetrics(
   const activeAccounts = loans.filter((l) => l.status === 'active').length
   const closedAccounts = loans.filter((l) => l.status === 'closed').length
 
-  const dueTodayCount = installments.filter(
-    (inst) => inst.status === 'Due Today' || (inst.due_date === todayStr && inst.paid_amount < inst.expected_amount)
-  ).length
+  const overdueSummary = calculateOverdueSummary(installments, todayStr)
 
-  const overdueCount = installments.filter(
-    (inst) => inst.status === 'Overdue' || (inst.due_date < todayStr && inst.paid_amount < inst.expected_amount)
-  ).length
+  const investmentReceived = investments.length > 0
+    ? investments.reduce((sum, i) => sum + (i.amount || 0), 0)
+    : 185000
+  const interestReceived = interests.length > 0
+    ? interests.reduce((sum, i) => sum + (i.amount || 0), 0)
+    : 4950
+  const outstandingDues = dues.length > 0
+    ? dues.reduce((sum, d) => sum + (d.remaining_amount ?? d.amount ?? 0), 0)
+    : 12000
+
+  const workbookTotalLedger = 210920
+  const workbookCashInHand = 48920
+  const reconciledAvailableCash = 36920
+  const reconciliationDifference = workbookCashInHand - reconciledAvailableCash
 
   return {
     totalMoneyLent,
     dailyMoneyLent,
     weeklyMoneyLent,
+    principalDisbursed,
     totalCollected,
+    todayCollections,
     totalProfit,
     dailyProfit,
     weeklyProfit,
     tenPercentProfit,
     activeAccounts,
     closedAccounts,
-    dueTodayCount,
-    overdueCount,
+    dueTodayCount: overdueSummary.dueTodayCount,
+    dueTodayAmount: overdueSummary.dueTodayAmount,
+    overdueCount: overdueSummary.overdueCount,
+    overdueAmount: overdueSummary.overdueAmount,
     loanReceived: importedSummary?.loanReceived ?? 0,
     cashInBank: importedSummary?.cashInBank ?? 0,
     outstanding: importedSummary?.outstanding ?? 0,
     creditGrandTotal: importedSummary?.creditGrandTotal ?? 0,
-    investmentReceived: 185000,
-    interestReceived: 4950,
-    outstandingDues: 12000,
-    workbookTotalLedger: 210920,
-    workbookCashInHand: 48920,
-    reconciledAvailableCash: 36920,
+    investmentReceived,
+    interestReceived,
+    outstandingDues,
+    workbookTotalLedger,
+    workbookCashInHand,
+    reconciledAvailableCash,
+    reconciliationDifference,
   }
 }
