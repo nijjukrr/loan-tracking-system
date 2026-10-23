@@ -362,11 +362,11 @@ export function DuePage() {
                   id="due-amount-input"
                   type="number"
                   min="1"
-                  step="1"
+                  step="any"
                   className="text-input"
                   required
-                  value={addForm.amount}
-                  onChange={(e) => setAddForm({ ...addForm, amount: Number(e.target.value) })}
+                  value={addForm.amount || ''}
+                  onChange={(e) => setAddForm({ ...addForm, amount: e.target.value === '' ? 0 : Number(e.target.value) })}
                 />
               </div>
 

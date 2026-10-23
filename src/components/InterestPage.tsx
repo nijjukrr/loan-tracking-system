@@ -40,8 +40,6 @@ export function InterestPage() {
   }, [])
 
   const totalInterest = interests.reduce((sum, item) => sum + Number(item.amount || 0), 0)
-  const targetVariance = totalInterest - WORKBOOK_REFERENCE_TARGETS.interestReceived
-  const isTargetReconciled = totalInterest === WORKBOOK_REFERENCE_TARGETS.interestReceived
 
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -131,28 +129,6 @@ export function InterestPage() {
           <strong className="kpi-value">{currency.format(WORKBOOK_REFERENCE_TARGETS.interestReceived)}</strong>
           <span className="kpi-subtext">9 entries (SEP&OCT sheet Cols K-N)</span>
         </div>
-
-        <div className="card kpi-card">
-          <span className="kpi-label">Reconciliation Status</span>
-          <strong className={`kpi-value ${isTargetReconciled ? 'text-positive' : 'text-danger'}`}>
-            {isTargetReconciled ? '✓ Reconciled' : `Variance: ${currency.format(targetVariance)}`}
-          </strong>
-          <span className="kpi-subtext">
-            {isTargetReconciled ? 'Matches ₹4,950 target exactly' : 'Review interest entries against source ledger'}
-          </span>
-        </div>
-      </div>
-
-      {/* Accounting Rule Notice */}
-      <div className="card" style={{ marginBottom: '1.5rem', background: '#f8fafc', borderLeft: '4px solid #10b981' }}>
-        <h3 style={{ margin: '0 0 0.375rem', fontSize: '0.9375rem', fontWeight: 700, color: '#047857' }}>
-          🛡️ Received Interest vs Expected Interest Rule
-        </h3>
-        <p style={{ margin: 0, fontSize: '0.8125rem', color: '#334155', lineHeight: '1.5' }}>
-          Only interest payments physically received from borrowers are recorded in this ledger.
-          Scheduled or expected future interest must <strong>never</strong> be pre-booked as received income,
-          and a receipt must never be counted twice.
-        </p>
       </div>
 
       {/* Search Bar */}
@@ -262,9 +238,9 @@ export function InterestPage() {
                   type="number"
                   required
                   min="1"
-                  step="10"
-                  value={form.amount}
-                  onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
+                  step="any"
+                  value={form.amount || ''}
+                  onChange={(e) => setForm({ ...form, amount: e.target.value === '' ? 0 : Number(e.target.value) })}
                   style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--line)', borderRadius: '6px' }}
                 />
               </div>

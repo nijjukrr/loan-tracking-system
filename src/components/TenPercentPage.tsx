@@ -39,8 +39,6 @@ export function TenPercentPage() {
   const [validation, setValidation] = useState<ReturnType<typeof validateTenPercentEntry>>({})
 
   const totalProfit = useMemo(() => calculateTenPercentProfit(entries), [entries])
-  const targetVariance = totalProfit - WORKBOOK_REFERENCE_TARGETS.tenPercentProfit
-  const isTargetReconciled = totalProfit === WORKBOOK_REFERENCE_TARGETS.tenPercentProfit
 
   const loadData = () => {
     setLoading(true)
@@ -161,28 +159,6 @@ export function TenPercentPage() {
           <strong className="kpi-value">{currency.format(WORKBOOK_REFERENCE_TARGETS.tenPercentProfit)}</strong>
           <span className="kpi-subtext">24 verified rows (SEP&OCT sheet Cols F-I)</span>
         </div>
-
-        <div className="card kpi-card">
-          <span className="kpi-label">Reconciliation Status</span>
-          <strong className={`kpi-value ${isTargetReconciled ? 'text-positive' : 'text-danger'}`}>
-            {isTargetReconciled ? '✓ Reconciled' : `Variance: ${currency.format(targetVariance)}`}
-          </strong>
-          <span className="kpi-subtext">
-            {isTargetReconciled ? 'Exact match with workbook' : 'Investigate missing or unverified rows'}
-          </span>
-        </div>
-      </div>
-
-      {/* Accounting Discrepancy Resolved Notice */}
-      <div className="card" style={{ marginBottom: '1.5rem', background: '#f8fafc', borderLeft: '4px solid #10b981' }}>
-        <h3 style={{ margin: '0 0 0.375rem', fontSize: '0.9375rem', fontWeight: 700, color: '#047857' }}>
-          ✓ ₹161,010 Profit Misclassification Discrepancy Resolved
-        </h3>
-        <p style={{ margin: 0, fontSize: '0.8125rem', color: '#334155', lineHeight: '1.5' }}>
-          The previous ₹161,010 total was caused by mistakenly treating large investment capital credits
-          (Ponniyan ₹27k, Sathish ₹13k, Rathika ₹50k, Gurusamy ₹30k) as 10% profit simply because they appeared in the credit column.
-          Those have been properly isolated to the Investment module, and the 10% profit ledger now correctly tracks only genuine profit entries totaling <strong>₹8,970</strong>.
-        </p>
       </div>
 
       {/* Search Bar */}
@@ -243,7 +219,9 @@ export function TenPercentPage() {
                     <td className="amount-cell primary-cell" style={{ textAlign: 'right' }}>
                       {currency.format(entry.amount)}
                     </td>
-                    <td style={{ fontSize: '0.8125rem' }}>{entry.notes || '—'}</td>
+                    <td style={{ fontSize: '0.8125rem' }}>
+                      {entry.notes && !entry.notes.includes('Imported from Excel') ? entry.notes : '—'}
+                    </td>
                     <td style={{ textAlign: 'center' }}>
                       <button
                         type="button"
@@ -301,9 +279,9 @@ export function TenPercentPage() {
                 <input
                   type="number"
                   min="0.01"
-                  step="0.01"
-                  value={form.amount}
-                  onChange={(event) => setForm({ ...form, amount: Number(event.target.value) })}
+                  step="any"
+                  value={form.amount || ''}
+                  onChange={(event) => setForm({ ...form, amount: event.target.value === '' ? 0 : Number(event.target.value) })}
                 />
                 {validation.amount && <span className="field-error">{validation.amount}</span>}
               </label>

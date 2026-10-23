@@ -78,7 +78,6 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
 
   // Bank & Liquid Cash
   const workbookCashInHand = totalLedgerValue - totalLoansPrincipal
-  const reconciledAvailableCash = workbookCashInHand - totalDue
 
   // Due Today & Overdue
   const todayStr = new Date().toISOString().slice(0, 10)
@@ -114,7 +113,7 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
 
       {loading || !metrics ? (
         <div className="kpi-grid">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => (
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
             <div className="kpi-card" key={i} style={{ opacity: 0.5 }}>
               <span className="kpi-label">Loading…</span>
               <span className="kpi-value">—</span>
@@ -177,16 +176,7 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
             <span className="kpi-subtext">TOTAL LEDGER − LOAN PRINCIPAL</span>
           </Link>
 
-          {/* 7. BALANCE */}
-          <Link to="/reconciliation" className="kpi-card highlight-card" style={{ textDecoration: 'none', borderColor: '#3b82f6', background: '#f0f9ff' }}>
-            <div className="kpi-label-row">
-              <span className="kpi-title">BALANCE</span>
-            </div>
-            <span className="kpi-value" style={{ color: '#0284c7' }}>{currency.format(reconciledAvailableCash)}</span>
-            <span className="kpi-subtext">Excludes ₹12,000 uncollected dues</span>
-          </Link>
-
-          {/* 8. WEEKLY LOANS */}
+          {/* 7. WEEKLY LOANS */}
           <Link to="/weekly" className="kpi-card" style={{ textDecoration: 'none' }}>
             <div className="kpi-label-row">
               <span className="kpi-title">WEEKLY LOANS</span>

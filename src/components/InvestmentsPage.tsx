@@ -39,8 +39,6 @@ export function InvestmentsPage() {
   }, [])
 
   const totalInvestment = investments.reduce((sum, item) => sum + Number(item.amount || 0), 0)
-  const targetVariance = totalInvestment - WORKBOOK_REFERENCE_TARGETS.investmentReceived
-  const isTargetReconciled = totalInvestment === WORKBOOK_REFERENCE_TARGETS.investmentReceived
 
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -123,16 +121,6 @@ export function InvestmentsPage() {
           <span className="kpi-label">Workbook Target Reference</span>
           <strong className="kpi-value">{currency.format(WORKBOOK_REFERENCE_TARGETS.investmentReceived)}</strong>
           <span className="kpi-subtext">8 partners (SEP&OCT sheet Cols P-S)</span>
-        </div>
-
-        <div className="card kpi-card">
-          <span className="kpi-label">Reconciliation Status</span>
-          <strong className={`kpi-value ${isTargetReconciled ? 'text-positive' : 'text-danger'}`}>
-            {isTargetReconciled ? '✓ Reconciled' : `Variance: ${currency.format(targetVariance)}`}
-          </strong>
-          <span className="kpi-subtext">
-            {isTargetReconciled ? 'Matches ₹1,85,000 ledger exactly' : 'Review entries against workbook source'}
-          </span>
         </div>
       </div>
 
@@ -229,9 +217,9 @@ export function InvestmentsPage() {
                   type="number"
                   required
                   min="1"
-                  step="500"
-                  value={form.amount}
-                  onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
+                  step="any"
+                  value={form.amount || ''}
+                  onChange={(e) => setForm({ ...form, amount: e.target.value === '' ? 0 : Number(e.target.value) })}
                   style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--line)', borderRadius: '6px' }}
                 />
               </div>

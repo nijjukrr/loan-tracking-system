@@ -459,10 +459,10 @@ export function MonthlyFundPage() {
                 <input
                   type="number"
                   required
-                  min={1000}
-                  step={500}
-                  value={newMemberTarget}
-                  onChange={(e) => setNewMemberTarget(Number(e.target.value))}
+                  min={1}
+                  step="any"
+                  value={newMemberTarget || ''}
+                  onChange={(e) => setNewMemberTarget(e.target.value === '' ? 0 : Number(e.target.value))}
                   style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--line)', borderRadius: '6px' }}
                 />
               </div>

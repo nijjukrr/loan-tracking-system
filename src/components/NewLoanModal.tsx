@@ -207,10 +207,10 @@ export function NewLoanModal({ isOpen, onClose, onSuccess }: Props) {
             <input
               type="number"
               required
-              min="500"
-              step="500"
-              value={principal}
-              onChange={(e) => handlePrincipalChange(Number(e.target.value))}
+              min="1"
+              step="any"
+              value={principal || ''}
+              onChange={(e) => handlePrincipalChange(e.target.value === '' ? 0 : Number(e.target.value))}
             />
           </label>
 
@@ -220,9 +220,10 @@ export function NewLoanModal({ isOpen, onClose, onSuccess }: Props) {
               <input
                 type="number"
                 required
-                min="1"
-                value={interestAmount}
-                onChange={(e) => setInterestAmount(Number(e.target.value))}
+                min="0"
+                step="any"
+                value={interestAmount || ''}
+                onChange={(e) => setInterestAmount(e.target.value === '' ? 0 : Number(e.target.value))}
               />
             </label>
           ) : (
