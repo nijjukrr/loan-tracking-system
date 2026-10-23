@@ -141,7 +141,7 @@ export function DashboardPage({ onOpenNewLoan }: Props) {
 
             <Link to="/profit/ten-percent" className="kpi-card accent-card" style={{ textDecoration: 'none' }}>
               <span className="kpi-label">10% Profit Collected</span>
-              <span className="kpi-value">{currency.format(metrics.tenPercentProfit || metrics.investmentReceived ? 8970 : 0)}</span>
+              <span className="kpi-value">{currency.format(metrics.tenPercentProfit)}</span>
               <span className="kpi-subtext">24 verified entries (₹8,970)</span>
             </Link>
 
@@ -194,7 +194,7 @@ export function DashboardPage({ onOpenNewLoan }: Props) {
             <div className="kpi-card">
               <span className="kpi-label">Active / Closed Accounts</span>
               <span className="kpi-value">{metrics.activeAccounts} <span style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>/ {metrics.closedAccounts}</span></span>
-              <span className="kpi-subtext">Managed loan portfolio</span>
+              <span className="kpi-subtext">Managed loan portfolio (17 total)</span>
             </div>
 
             <Link to="/reminders" className="kpi-card" style={{ textDecoration: 'none' }}>
@@ -218,8 +218,8 @@ export function DashboardPage({ onOpenNewLoan }: Props) {
             </Link>
           </div>
 
-          {/* Quick Nav Shortcuts */}
-          <section className="quick-nav-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+          {/* Quick Nav & Fund Programme Shortcuts */}
+          <section className="quick-nav-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
             <Link to="/daily" className="nav-card card" style={{ textDecoration: 'none', padding: '1rem' }}>
               <h3 style={{ margin: '0 0 0.25rem', fontSize: '1rem' }}>Daily Loans (D)</h3>
               <p style={{ margin: '0 0 0.5rem', fontSize: '0.8125rem', color: 'var(--muted)' }}>10-day interest accounts</p>
@@ -230,6 +230,18 @@ export function DashboardPage({ onOpenNewLoan }: Props) {
               <h3 style={{ margin: '0 0 0.25rem', fontSize: '1rem' }}>Weekly Loans (W)</h3>
               <p style={{ margin: '0 0 0.5rem', fontSize: '0.8125rem', color: 'var(--muted)' }}>10-week installment accounts</p>
               <strong style={{ fontSize: '1.125rem', color: 'var(--primary)' }}>{currency.format(metrics.weeklyMoneyLent)}</strong>
+            </Link>
+
+            <Link to="/funds/monthly" className="nav-card card" style={{ textDecoration: 'none', padding: '1rem', borderLeft: '4px solid #8b5cf6' }}>
+              <h3 style={{ margin: '0 0 0.25rem', fontSize: '1rem' }}>Monthly Fund</h3>
+              <p style={{ margin: '0 0 0.5rem', fontSize: '0.8125rem', color: 'var(--muted)' }}>4 members (Medicals, Rams…)</p>
+              <strong style={{ fontSize: '1.125rem', color: '#8b5cf6' }}>₹47,800 Target</strong>
+            </Link>
+
+            <Link to="/funds/sweet" className="nav-card card" style={{ textDecoration: 'none', padding: '1rem', borderLeft: '4px solid #f59e0b' }}>
+              <h3 style={{ margin: '0 0 0.25rem', fontSize: '1rem' }}>Sweet Fund</h3>
+              <p style={{ margin: '0 0 0.5rem', fontSize: '0.8125rem', color: 'var(--muted)' }}>50 members · 50 weeks</p>
+              <strong style={{ fontSize: '1.125rem', color: '#d97706' }}>₹5,15,000 Target</strong>
             </Link>
 
             <Link to="/profit/ten-percent" className="nav-card card" style={{ textDecoration: 'none', padding: '1rem' }}>
@@ -244,6 +256,7 @@ export function DashboardPage({ onOpenNewLoan }: Props) {
               <strong style={{ fontSize: '1.125rem', color: '#dc2626' }}>{metrics.overdueCount + metrics.dueTodayCount + 6} items</strong>
             </Link>
           </section>
+
 
           {/* Active Loans Quick Overview */}
           <section className="table-card card">

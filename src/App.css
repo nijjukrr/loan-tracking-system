@@ -1028,7 +1028,67 @@ select:focus {
   background: rgba(241, 245, 249, 0.6);
 }
 
-/* KPI Card Variations */
+/* KPI Card Variations & Grid System */
+.kpi-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+  gap: 1rem !important;
+  margin-bottom: 1.5rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.kpi-card {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1px solid var(--line, #e2e8f0) !important;
+  border-radius: var(--radius, 12px) !important;
+  padding: 1.125rem 1.25rem !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease !important;
+  text-decoration: none !important;
+  color: inherit !important;
+  box-sizing: border-box !important;
+  min-height: 96px !important;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  border-color: var(--accent, #10b981) !important;
+}
+
+.kpi-label {
+  display: block !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: var(--muted, #64748b) !important;
+  margin-bottom: 0.375rem !important;
+  line-height: 1.2 !important;
+}
+
+.kpi-value {
+  display: block !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  color: var(--text, #0f172a) !important;
+  font-variant-numeric: tabular-nums !important;
+  margin-bottom: 0.375rem !important;
+}
+
+.kpi-subtext {
+  display: block !important;
+  font-size: 0.75rem !important;
+  color: var(--muted, #64748b) !important;
+  line-height: 1.35 !important;
+}
+
 .kpi-card.highlight-card {
   border-left: 4px solid var(--accent);
 }
@@ -1043,6 +1103,32 @@ select:focus {
 
 .kpi-card.danger-card {
   border-left: 4px solid var(--danger);
+}
+
+/* Quick Nav Cards */
+.quick-nav-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+  gap: 1rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.nav-card {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 1rem 1.25rem !important;
+  border-radius: var(--radius, 12px) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1px solid var(--line, #e2e8f0) !important;
+  text-decoration: none !important;
+  color: inherit !important;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.nav-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent, #10b981) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }
 
 /* Print-friendly Account Statement & Audit Styling */
