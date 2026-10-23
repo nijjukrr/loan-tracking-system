@@ -480,6 +480,25 @@ export class LocalPreviewFinanceApi implements FinanceApi {
 
     const effectivePaidDate = input.paid_date || input.payment_date || formatDateISO(new Date())
     const paymentAmount = Number(input.amount)
+
+    let principalAllocation: number | undefined = input.principal_allocation
+    let interestAllocation: number | undefined = input.interest_allocation
+
+    if (input.payment_type === 'Principal') {
+      principalAllocation = paymentAmount
+      interestAllocation = 0
+    } else if (input.payment_type === 'Interest' || input.payment_type === 'Weekly Installment') {
+      interestAllocation = paymentAmount
+      principalAllocation = 0
+    } else if (input.payment_type === 'Interest + Principal') {
+      if (interestAllocation === undefined) {
+        interestAllocation = targetInst?.expected_amount || loan.interest_amount || 0
+      }
+      if (principalAllocation === undefined) {
+        principalAllocation = Math.max(0, paymentAmount - interestAllocation)
+      }
+    }
+
     const newPayment: Payment = {
       id: `pay-${Date.now()}`,
       loan_id: loan.id,
@@ -490,6 +509,8 @@ export class LocalPreviewFinanceApi implements FinanceApi {
       payment_date: effectivePaidDate,
       amount: paymentAmount,
       payment_type: input.payment_type,
+      principal_allocation: principalAllocation,
+      interest_allocation: interestAllocation,
       note: input.note?.trim() || null,
       created_at: new Date().toISOString(),
     }
@@ -497,7 +518,28 @@ export class LocalPreviewFinanceApi implements FinanceApi {
     let updatedInsts = [...store.installments]
     let updatedLoan = { ...loan }
 
-    if (isPrincipalReturn) {
+    if (input.payment_type === 'Interest + Principal') {
+      const intAlloc = interestAllocation || 0
+      const prinAlloc = principalAllocation || 0
+
+      if (targetInst) {
+        const instIndex = updatedInsts.findIndex((i) => i.id === targetInst.id)
+        if (instIndex !== -1) {
+          const inst = { ...updatedInsts[instIndex] }
+          inst.paid_amount += intAlloc
+          inst.paid_date = effectivePaidDate
+          inst.status = inst.paid_amount >= inst.expected_amount ? 'Paid' : 'Partial'
+          updatedInsts[instIndex] = inst
+        }
+      }
+
+      updatedLoan.total_collected += paymentAmount
+      updatedLoan.remaining_balance = Math.max(0, updatedLoan.remaining_balance - prinAlloc)
+      if (prinAlloc >= updatedLoan.principal) {
+        updatedLoan.status = 'closed'
+        updatedLoan.closed_at = effectivePaidDate
+      }
+    } else if (isPrincipalReturn) {
       updatedLoan.total_collected += paymentAmount
       updatedLoan.remaining_balance = Math.max(0, updatedLoan.remaining_balance - paymentAmount)
       updatedLoan.status = 'closed'

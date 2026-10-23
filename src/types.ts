@@ -299,6 +299,8 @@ export type NewPaymentInput = {
   paid_date?: string
   amount: number
   payment_type: PaymentType
+  principal_allocation?: number
+  interest_allocation?: number
   note?: string
 }
 

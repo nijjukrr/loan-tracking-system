@@ -126,6 +126,13 @@ export function PaymentsPage() {
                     <td className="amount-cell primary-cell">{currency.format(pay.amount)}</td>
                     <td>
                       <span className="source-badge">{pay.payment_type}</span>
+                      {(pay.principal_allocation !== undefined || pay.interest_allocation !== undefined) && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '2px' }}>
+                          {pay.interest_allocation ? `Int: ₹${pay.interest_allocation.toLocaleString('en-IN')}` : ''}
+                          {pay.interest_allocation && pay.principal_allocation ? ' • ' : ''}
+                          {pay.principal_allocation ? `Prin: ₹${pay.principal_allocation.toLocaleString('en-IN')}` : ''}
+                        </div>
+                      )}
                     </td>
                     <td>{pay.note || '—'}</td>
                   </tr>
