@@ -76,18 +76,22 @@ grant select, insert, update, delete on table public.loans to authenticated;
 grant select, insert, update, delete on table public.installments to authenticated;
 grant select, insert, update, delete on table public.payments to authenticated;
 
+drop policy if exists "Members can access customers" on public.customers;
 create policy "Members can access customers" on public.customers
   for all to authenticated
   using (exists (select 1 from public.app_members m where m.user_id = (select auth.uid()) and m.active));
 
+drop policy if exists "Members can access loans" on public.loans;
 create policy "Members can access loans" on public.loans
   for all to authenticated
   using (exists (select 1 from public.app_members m where m.user_id = (select auth.uid()) and m.active));
 
+drop policy if exists "Members can access installments" on public.installments;
 create policy "Members can access installments" on public.installments
   for all to authenticated
   using (exists (select 1 from public.app_members m where m.user_id = (select auth.uid()) and m.active));
 
+drop policy if exists "Members can access payments" on public.payments;
 create policy "Members can access payments" on public.payments
   for all to authenticated
   using (exists (select 1 from public.app_members m where m.user_id = (select auth.uid()) and m.active));

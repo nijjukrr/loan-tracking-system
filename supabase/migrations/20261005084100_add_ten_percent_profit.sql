@@ -1,13 +1,13 @@
 create extension if not exists pgcrypto;
 
-create table public.app_members (
+create table if not exists public.app_members (
   user_id uuid primary key references auth.users (id) on delete cascade,
   display_name text,
   active boolean not null default true,
   created_at timestamptz not null default now()
 );
 
-create table public.main_transactions (
+create table if not exists public.main_transactions (
   id uuid primary key default gen_random_uuid(),
   main_sheet_no bigint not null check (main_sheet_no > 0),
   transaction_date date,
@@ -20,7 +20,7 @@ create table public.main_transactions (
   unique (main_sheet_no)
 );
 
-create table public.ten_percent_entries (
+create table if not exists public.ten_percent_entries (
   id uuid primary key default gen_random_uuid(),
   entry_date date not null,
   particulars text not null check (length(trim(particulars)) > 0),
@@ -38,17 +38,17 @@ create table public.ten_percent_entries (
   )
 );
 
-create index main_transactions_untagged_idx
+create index if not exists main_transactions_untagged_idx
   on public.main_transactions (main_sheet_no)
   where category is null;
 
-create index main_transactions_category_tagged_by_idx
+create index if not exists main_transactions_category_tagged_by_idx
   on public.main_transactions (category_tagged_by);
 
-create index ten_percent_entries_entry_date_idx
+create index if not exists ten_percent_entries_entry_date_idx
   on public.ten_percent_entries (entry_date desc);
 
-create index ten_percent_entries_created_by_idx
+create index if not exists ten_percent_entries_created_by_idx
   on public.ten_percent_entries (created_by);
 
 create or replace function public.set_updated_at()
@@ -81,11 +81,13 @@ grant select, insert on table public.ten_percent_entries to authenticated;
 grant update (entry_date, particulars, amount, main_sheet_no, notes)
   on table public.ten_percent_entries to authenticated;
 
+drop policy if exists "Members can read their own membership" on public.app_members;
 create policy "Members can read their own membership"
 on public.app_members for select
 to authenticated
 using ((select auth.uid()) = user_id and active);
 
+drop policy if exists "Members can read MAIN transactions" on public.main_transactions;
 create policy "Members can read MAIN transactions"
 on public.main_transactions for select
 to authenticated
@@ -98,6 +100,7 @@ using (
   )
 );
 
+drop policy if exists "Members can read 10 percent entries" on public.ten_percent_entries;
 create policy "Members can read 10 percent entries"
 on public.ten_percent_entries for select
 to authenticated
@@ -110,6 +113,7 @@ using (
   )
 );
 
+drop policy if exists "Members can add 10 percent entries" on public.ten_percent_entries;
 create policy "Members can add 10 percent entries"
 on public.ten_percent_entries for insert
 to authenticated
@@ -125,6 +129,7 @@ with check (
   )
 );
 
+drop policy if exists "Members can update 10 percent entries" on public.ten_percent_entries;
 create policy "Members can update 10 percent entries"
 on public.ten_percent_entries for update
 to authenticated
