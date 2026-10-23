@@ -16,36 +16,40 @@ export function WeeklyPage({ onOpenNewLoan }: Props) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'CLOSED'>('ACTIVE')
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null)
   const [showPayModal, setShowPayModal] = useState(false)
+  const [todayStr] = useState(() => formatDateISO(new Date()))
 
   const loadData = useCallback(() => {
     setLoading(true)
     setError('')
+    const status = statusFilter === 'ALL' ? undefined : statusFilter.toLowerCase() as 'active' | 'closed'
     financeApi
-      .listLoans({ mode: 'W', search })
+      .listLoans({ mode: 'W', status, search })
       .then((data) => setLoans(data))
       .catch((err) => {
         console.error('Weekly loans load error:', err)
         setError(err instanceof Error ? err.message : 'Unable to load Weekly accounts.')
       })
       .finally(() => setLoading(false))
-  }, [search])
+  }, [search, statusFilter])
 
   useEffect(() => {
     loadData()
   }, [loadData])
 
-  const todayStr = formatDateISO(new Date())
-  const moneyGiven = loans.reduce((sum, l) => sum + Number(l.principal || 0), 0)
+  const totalPrincipal = loans.reduce((sum, l) => sum + Number(l.principal || 0), 0)
+  const totalCollected = loans.reduce((sum, l) => sum + Number(l.total_collected || 0), 0)
+  const totalBalance = loans.reduce((sum, l) => sum + Number(l.remaining_balance || 0), 0)
 
   return (
-    <>
+    <div className="page-shell">
       <header className="page-header">
         <div>
           <p className="eyebrow">7-Day Weekly Installment Loans</p>
-          <h1>Weekly Loans</h1>
-          <p className="page-description">
+          <h1 className="page-title">Weekly Loans</h1>
+          <p className="page-subtitle">
             Weekly loans are paid every 7 days across 10 weeks. Next due date advances automatically upon payment.
           </p>
         </div>
@@ -56,36 +60,61 @@ export function WeeklyPage({ onOpenNewLoan }: Props) {
         </div>
       </header>
 
-      {/* Summary Cards */}
-      <section className="metrics-grid" style={{ marginBottom: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-        <div className="metric-card highlight-card">
-          <span>Money Given</span>
-          <strong>{currency.format(moneyGiven)}</strong>
-          <small>Total Weekly principal lent</small>
+      {/* Summary KPI Cards */}
+      <div className="kpi-grid">
+        <div className="kpi-card">
+          <span className="kpi-label">Weekly Accounts</span>
+          <span className="kpi-value">{loans.length}</span>
+          <span className="kpi-subtext">Active 10-week installment loans</span>
         </div>
-        <div className="metric-card">
-          <span>Money Collected</span>
-          <strong>₹0</strong>
-          <small>Weekly collections (pending logic)</small>
+        <div className="kpi-card highlight-card">
+          <span className="kpi-label">Money Given (Principal)</span>
+          <span className="kpi-value">{currency.format(totalPrincipal)}</span>
+          <span className="kpi-subtext">Total Weekly capital lent</span>
         </div>
-      </section>
+        <div className="kpi-card success-card">
+          <span className="kpi-label">Money Collected</span>
+          <span className="kpi-value">{currency.format(totalCollected)}</span>
+          <span className="kpi-subtext">Weekly installments received</span>
+        </div>
+        <div className="kpi-card danger-card">
+          <span className="kpi-label">Outstanding Balance</span>
+          <span className="kpi-value text-danger">{currency.format(totalBalance)}</span>
+          <span className="kpi-subtext">Pending portfolio recovery</span>
+        </div>
+      </div>
 
       {error && <div className="form-message error-message" style={{ marginBottom: '1rem' }}>{error}</div>}
 
-      <section className="search-bar-card">
-        <input
-          type="search"
-          placeholder="Search weekly loans by Person name…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      {/* Search & Status Filters */}
+      <section className="search-bar-card card" style={{ marginBottom: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+          <input
+            type="search"
+            placeholder="Search borrower, sheet #, A/C #…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--muted)', fontWeight: 600 }}>Status:</span>
+            {(['ACTIVE', 'CLOSED', 'ALL'] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                className={statusFilter === s ? 'primary-button compact-button' : 'secondary-button compact-button'}
+                style={{ padding: '4px 10px', fontSize: '0.8125rem' }}
+                onClick={() => setStatusFilter(s)}
+              >
+                {s === 'ALL' ? 'All' : s === 'ACTIVE' ? 'Active' : 'Closed'}
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
 
-      <section className="table-card">
-        <div className="table-heading">
-          <div>
-            <h2>Weekly Accounts ({loans.length})</h2>
-          </div>
+      <section className="table-card card">
+        <div className="card-header" style={{ marginBottom: '1rem' }}>
+          <h2 style={{ fontSize: '1.125rem', margin: 0, fontWeight: 700 }}>Weekly Accounts ({loans.length})</h2>
         </div>
 
         {loading ? (
@@ -93,20 +122,23 @@ export function WeeklyPage({ onOpenNewLoan }: Props) {
         ) : loans.length === 0 ? (
           <div className="empty-state">
             <strong>No Weekly loans found</strong>
-            <span>Add a new Weekly loan to get started.</span>
+            <span>Try adjusting your search query or add a new Weekly loan.</span>
           </div>
         ) : (
-          <div className="table-scroll">
-            <table>
+          <div className="table-responsive">
+            <table className="data-table">
               <thead>
                 <tr>
-                  <th>Name</th>
+                  <th>A/C #</th>
+                  <th>Borrower</th>
                   <th>Loan Date</th>
-                  <th className="amount-cell">Weekly Amount</th>
+                  <th style={{ textAlign: 'right' }}>Principal</th>
+                  <th style={{ textAlign: 'right' }}>Weekly Installment</th>
                   <th>Next Due</th>
-                  <th>Weeks Paid</th>
+                  <th style={{ textAlign: 'center' }}>Progress</th>
+                  <th style={{ textAlign: 'right' }}>Balance</th>
                   <th>Status</th>
-                  <th>Actions</th>
+                  <th style={{ textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -118,36 +150,52 @@ export function WeeklyPage({ onOpenNewLoan }: Props) {
 
                   return (
                     <tr key={loan.id}>
-                      <td className="primary-cell">
+                      <td style={{ fontWeight: 600, color: 'var(--muted)' }}>#{loan.main_sheet_no}</td>
+                      <td className="primary-cell" style={{ fontWeight: 600 }}>
                         <Link to={`/borrower/${loan.id}`} className="customer-link">
                           {loan.customer_name}
                         </Link>
                       </td>
                       <td>{loan.loan_date}</td>
-                      <td className="amount-cell">{currency.format(loan.weekly_payment || 3000)}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 600 }}>{currency.format(loan.principal)}</td>
+                      <td style={{ textAlign: 'right', color: 'var(--accent)' }}>{currency.format(loan.weekly_payment || 3000)}</td>
                       <td>
-                        <span className={`due-tag ${isOverdue ? 'overdue' : isDueToday ? 'due-today' : 'upcoming'}`}>
+                        <span className={`pill ${isOverdue ? 'pill-red' : isDueToday ? 'pill-gold' : 'pill-green'}`}>
                           {nextDue}
                         </span>
                       </td>
-                      <td>{weeksPaid} / 10</td>
-                      <td>
-                        <span className={`status-badge ${loan.status}`}>{loan.status.toUpperCase()}</span>
+                      <td style={{ textAlign: 'center' }}>
+                        <span className="pill pill-gray">{weeksPaid} / 10 wks</span>
+                      </td>
+                      <td style={{ textAlign: 'right', fontWeight: 700 }} className={loan.remaining_balance > 0 ? 'text-danger' : 'text-positive'}>
+                        {currency.format(loan.remaining_balance)}
                       </td>
                       <td>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button
-                            type="button"
+                        <span className={`pill ${loan.status === 'active' ? 'pill-green' : 'pill-gray'}`}>
+                          {loan.status}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: '0.375rem', justifyContent: 'center' }}>
+                          {loan.status === 'active' && (
+                            <button
+                              type="button"
+                              className="secondary-button compact-button"
+                              style={{ padding: '3px 8px', fontSize: '0.75rem' }}
+                              onClick={() => {
+                                setSelectedLoan(loan)
+                                setShowPayModal(true)
+                              }}
+                            >
+                              Collect
+                            </button>
+                          )}
+                          <Link
+                            to={`/borrower/${loan.id}`}
                             className="secondary-button compact-button"
-                            onClick={() => {
-                              setSelectedLoan(loan)
-                              setShowPayModal(true)
-                            }}
+                            style={{ padding: '3px 8px', fontSize: '0.75rem' }}
                           >
-                            Mark Paid
-                          </button>
-                          <Link to={`/borrower/${loan.id}`} className="secondary-button compact-button">
-                            View
+                            Timeline
                           </Link>
                         </div>
                       </td>
@@ -162,15 +210,18 @@ export function WeeklyPage({ onOpenNewLoan }: Props) {
 
       {showPayModal && selectedLoan && (
         <MarkPaidModal
-          isOpen={showPayModal}
           loan={selectedLoan}
           onClose={() => {
             setShowPayModal(false)
             setSelectedLoan(null)
           }}
-          onSuccess={loadData}
+          onSuccess={() => {
+            setShowPayModal(false)
+            setSelectedLoan(null)
+            loadData()
+          }}
         />
       )}
-    </>
+    </div>
   )
 }
