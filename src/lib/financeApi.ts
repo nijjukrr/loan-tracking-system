@@ -556,52 +556,27 @@ function getLocalStore() {
   const safeParse = <T>(key: string, fallback: T): T => {
     try {
       const item = getStorageItem(key)
-      return item ? JSON.parse(item) : fallback
+      if (item === null) return fallback
+      return JSON.parse(item)
     } catch {
       return fallback
     }
   }
 
   let loans = safeParse<Loan[]>(STORAGE_KEY_LOANS, initial.loans)
-  if (!loans || loans.length === 0) loans = initial.loans
-
   let installments = safeParse<Installment[]>(STORAGE_KEY_INSTALLMENTS, initial.installments)
-  if (!installments || installments.length === 0) installments = initial.installments
-
   const payments = safeParse<Payment[]>(STORAGE_KEY_PAYMENTS, initial.payments)
-
   let tenPercentEntries = safeParse<TenPercentEntry[]>(STORAGE_KEY_TEN_PERCENT, initial.tenPercentEntries)
-  if (!tenPercentEntries || tenPercentEntries.length === 0) tenPercentEntries = initial.tenPercentEntries
-
   let mainTransactions = safeParse<MainTransaction[]>(STORAGE_KEY_MAIN_TX, initial.mainTransactions)
-  if (!mainTransactions || mainTransactions.length === 0) mainTransactions = initial.mainTransactions
-
   let investments = safeParse<InvestmentEntry[]>(STORAGE_KEY_INVESTMENTS, initial.investments)
-  if (!investments || investments.length === 0) investments = initial.investments
-
   let interests = safeParse<InterestEntry[]>(STORAGE_KEY_INTERESTS, initial.interests)
-  if (!interests || interests.length === 0) interests = initial.interests
-
   let dues = safeParse<DueReceivableEntry[]>(STORAGE_KEY_DUES, initial.dues)
-  if (!dues || dues.length === 0) dues = initial.dues
-
   let customers = safeParse<Customer[]>(STORAGE_KEY_CUSTOMERS, initial.customers)
-  if (!customers || customers.length === 0) customers = initial.customers
-
   let ledgerTransactions = safeParse<FinancialLedgerTransaction[]>(STORAGE_KEY_LEDGER, initial.ledgerTransactions)
-  if (!ledgerTransactions || ledgerTransactions.length === 0) ledgerTransactions = initial.ledgerTransactions
-
   let auditLogs = safeParse<AuditLogEntry[]>(STORAGE_KEY_AUDIT, initial.auditLogs)
-  if (!auditLogs || auditLogs.length === 0) auditLogs = initial.auditLogs
-
   let monthlyMembers = safeParse<MonthlyFundMember[]>(STORAGE_KEY_MONTHLY_MEMBERS, initial.monthlyFundMembers)
-  if (!monthlyMembers || monthlyMembers.length === 0) monthlyMembers = initial.monthlyFundMembers
-
   const monthlyCollections = safeParse<MonthlyFundCollection[]>(STORAGE_KEY_MONTHLY_COLLECTIONS, initial.monthlyFundCollections)
-
   let sweetProgramme = safeParse<SweetFundProgramme>(STORAGE_KEY_SWEET_PROGRAMME, initial.sweetFundProgramme)
-  if (!sweetProgramme) sweetProgramme = initial.sweetFundProgramme
-
   const sweetMembers = safeParse<SweetFundMember[]>(STORAGE_KEY_SWEET_MEMBERS, initial.sweetFundMembers)
   const sweetInstallments = safeParse<SweetFundInstallment[]>(STORAGE_KEY_SWEET_INSTALLMENTS, initial.sweetFundInstallments)
   const sweetPayments = safeParse<SweetFundPayment[]>(STORAGE_KEY_SWEET_PAYMENTS, initial.sweetFundPayments)
