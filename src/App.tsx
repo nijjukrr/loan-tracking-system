@@ -13,6 +13,7 @@ import { BorrowerDetailPage } from './components/BorrowerDetailPage'
 import { TenPercentPage } from './components/TenPercentPage'
 import { ReconciliationPage } from './components/ReconciliationPage'
 import { CustomersPage } from './components/CustomersPage'
+import { InvestmentsPage } from './components/InvestmentsPage'
 import { NewLoanModal } from './components/NewLoanModal'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import './App.css'
@@ -72,6 +73,7 @@ function App() {
           <Route path="/reconciliation" element={<ReconciliationPage key={`rec-${refreshKey}`} />} />
           <Route path="/borrowers" element={<CustomersPage key={`cust-${refreshKey}`} />} />
           <Route path="/customers" element={<CustomersPage key={`cust2-${refreshKey}`} />} />
+          <Route path="/investments" element={<InvestmentsPage key={`inv-${refreshKey}`} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
