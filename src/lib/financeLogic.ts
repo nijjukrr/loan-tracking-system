@@ -63,6 +63,98 @@ export function getInstallmentStatus(
   return 'Upcoming'
 }
 
+/**
+ * Recalculates an installment schedule based on actual payment dates and amounts.
+ * Preserves the 10-day daily-loan cycle and 7-day weekly cycle.
+ * For Daily loans: when installment N is marked paid on date X, installment N+1's due date
+ * rolls to X + 10 days if currently upcoming or past due.
+ * Updates each installment's status dynamically relative to todayStr.
+ */
+export function recalculateInstallmentSchedule(
+  installments: Installment[],
+  mode: ModeKind,
+  todayStr: string = formatDateISO(new Date())
+): Installment[] {
+  const sorted = [...installments].sort((a, b) => a.installment_number - b.installment_number)
+  const updated: Installment[] = []
+
+  let lastPaidDate: string | null = null
+
+  for (let i = 0; i < sorted.length; i++) {
+    const inst = { ...sorted[i] }
+    const isPaid = inst.paid_amount >= inst.expected_amount && inst.expected_amount > 0
+
+    if (isPaid && inst.paid_date) {
+      lastPaidDate = inst.paid_date
+      inst.status = 'Paid'
+    } else {
+      if (mode === 'D' && lastPaidDate && inst.installment_number > 1 && inst.status === 'Upcoming') {
+        const nextRollingDue = calculateNextDueDate('D', lastPaidDate)
+        if (nextRollingDue > inst.due_date) {
+          inst.due_date = nextRollingDue
+        }
+      }
+      inst.status = getInstallmentStatus(
+        inst.due_date,
+        inst.paid_date,
+        inst.paid_amount,
+        inst.expected_amount,
+        todayStr
+      )
+    }
+    updated.push(inst)
+  }
+
+  return updated
+}
+
+/**
+ * Calculates total overdue and due-today amounts and counts across an installment list
+ */
+export function calculateOverdueSummary(
+  installments: Installment[],
+  todayStr: string = formatDateISO(new Date())
+): {
+  overdueCount: number
+  overdueAmount: number
+  dueTodayCount: number
+  dueTodayAmount: number
+  upcomingCount: number
+  upcomingAmount: number
+} {
+  let overdueCount = 0
+  let overdueAmount = 0
+  let dueTodayCount = 0
+  let dueTodayAmount = 0
+  let upcomingCount = 0
+  let upcomingAmount = 0
+
+  for (const inst of installments) {
+    const remaining = Math.max(0, inst.expected_amount - inst.paid_amount)
+    if (remaining <= 0) continue
+
+    if (inst.due_date < todayStr) {
+      overdueCount++
+      overdueAmount += remaining
+    } else if (inst.due_date === todayStr) {
+      dueTodayCount++
+      dueTodayAmount += remaining
+    } else {
+      upcomingCount++
+      upcomingAmount += remaining
+    }
+  }
+
+  return {
+    overdueCount,
+    overdueAmount,
+    dueTodayCount,
+    dueTodayAmount,
+    upcomingCount,
+    upcomingAmount,
+  }
+}
+
 export function generateDailyInstallments(
   loanId: string,
   loanDate: string,

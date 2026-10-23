@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest'
 import {
   calculateDailyProfit,
   calculateNextDueDate,
+  calculateOverdueSummary,
   calculateTenPercentProfit,
   calculateWeeklyRealizedProfit,
   computeDashboardMetrics,
   generateDailyInstallments,
   generateWeeklyInstallments,
   getInstallmentStatus,
+  recalculateInstallmentSchedule,
   validateTenPercentEntry,
 } from './financeLogic'
 import type { Loan, Payment, TenPercentEntry } from '../types'
@@ -146,5 +148,38 @@ describe('financeLogic business rules', () => {
     expect(invalid.entry_date).toBeDefined()
     expect(invalid.particulars).toBeDefined()
     expect(invalid.amount).toBeDefined()
+  })
+
+  it('recalculates daily installment schedule dynamically with rolling 10-day cycle upon payment', () => {
+    const rawInsts = generateDailyInstallments('loan-d1', '2026-10-01', '2026-10-11', 300)
+    expect(rawInsts[0].due_date).toBe('2026-10-11')
+    expect(rawInsts[1].due_date).toBe('2026-10-21')
+
+    // Mark installment 1 as paid on 2026-10-15 (4 days late)
+    rawInsts[0].paid_amount = 300
+    rawInsts[0].paid_date = '2026-10-15'
+
+    const updated = recalculateInstallmentSchedule(rawInsts, 'D', '2026-10-16')
+    expect(updated[0].status).toBe('Paid')
+    // Next due rolls to 2026-10-15 + 10 days = 2026-10-25!
+    expect(updated[1].due_date).toBe('2026-10-25')
+    expect(updated[1].status).toBe('Upcoming')
+  })
+
+  it('calculates overdue and due-today summary accurately', () => {
+    const insts = [
+      { id: '1', loan_id: 'l1', installment_number: 1, due_date: '2026-10-01', expected_amount: 300, paid_amount: 0, status: 'Overdue' as const, created_at: '', updated_at: '' },
+      { id: '2', loan_id: 'l1', installment_number: 2, due_date: '2026-10-05', expected_amount: 300, paid_amount: 100, status: 'Due Today' as const, created_at: '', updated_at: '' },
+      { id: '3', loan_id: 'l1', installment_number: 3, due_date: '2026-10-15', expected_amount: 300, paid_amount: 0, status: 'Upcoming' as const, created_at: '', updated_at: '' },
+      { id: '4', loan_id: 'l1', installment_number: 4, due_date: '2026-09-20', expected_amount: 300, paid_amount: 300, status: 'Paid' as const, created_at: '', updated_at: '' },
+    ]
+
+    const summary = calculateOverdueSummary(insts, '2026-10-05')
+    expect(summary.overdueCount).toBe(1)
+    expect(summary.overdueAmount).toBe(300)
+    expect(summary.dueTodayCount).toBe(1)
+    expect(summary.dueTodayAmount).toBe(200) // 300 expected - 100 paid
+    expect(summary.upcomingCount).toBe(1)
+    expect(summary.upcomingAmount).toBe(300)
   })
 })
