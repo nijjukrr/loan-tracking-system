@@ -14,7 +14,7 @@ export function ActiveAccountsPage({ onOpenNewLoan }: Props) {
   const [loans, setLoans] = useState<Loan[]>([])
   const [loading, setLoading] = useState(true)
   const [modeFilter, setModeFilter] = useState<ModeKind | 'ALL'>('ALL')
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'OUTSTANDING' | 'CLEARED'>('ALL')
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'OUTSTANDING' | 'CLEARED'>('OUTSTANDING')
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'principal-desc' | 'name-asc'>('date-desc')
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null)
@@ -23,12 +23,13 @@ export function ActiveAccountsPage({ onOpenNewLoan }: Props) {
   const loadData = useCallback(() => {
     setLoading(true)
     const mode = modeFilter === 'ALL' ? undefined : modeFilter
+    const status = statusFilter === 'CLEARED' ? 'closed' : statusFilter === 'OUTSTANDING' ? 'active' : undefined
     financeApi
-      .listLoans({ mode })
+      .listLoans({ status, mode })
       .then((data) => setLoans(data))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false))
-  }, [modeFilter])
+  }, [modeFilter, statusFilter])
 
   useEffect(() => {
     loadData()
