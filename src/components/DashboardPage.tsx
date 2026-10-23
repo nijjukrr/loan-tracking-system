@@ -8,12 +8,6 @@ import type {
   InterestEntry,
   InvestmentEntry,
   Loan,
-  MonthlyFundCollection,
-  MonthlyFundMember,
-  Payment,
-  SweetFundMember,
-  SweetFundPayment,
-  SweetFundProgramme,
   TenPercentEntry,
 } from '../types'
 
@@ -24,18 +18,13 @@ type Props = {
 }
 
 type ActiveTooltip =
-  | 'CAPITAL_POOL'
   | 'INVEST'
   | 'INTEREST'
   | 'PROFIT'
   | 'DUE'
-  | 'INCOME'
-  | 'TOTAL_LEDGER'
   | 'LOAN'
   | 'DAILY_LOANS'
   | 'WEEKLY_LOANS'
-  | 'MONTHLY_FUND'
-  | 'SWEET_FUND'
   | null
 
 type PopoverProps = {
@@ -182,15 +171,8 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
   const [dues, setDues] = useState<DueReceivableEntry[]>([])
   const [investments, setInvestments] = useState<InvestmentEntry[]>([])
   const [loans, setLoans] = useState<Loan[]>([])
-  const [sweetProgramme, setSweetProgramme] = useState<SweetFundProgramme | null>(null)
-  const [sweetMembers, setSweetMembers] = useState<SweetFundMember[]>([])
-  const [sweetPayments, setSweetPayments] = useState<SweetFundPayment[]>([])
-  const [monthlyMembers, setMonthlyMembers] = useState<MonthlyFundMember[]>([])
-  const [monthlyCollections, setMonthlyCollections] = useState<MonthlyFundCollection[]>([])
-  const [allPayments, setAllPayments] = useState<Payment[]>([])
   const [installments, setInstallments] = useState<Installment[]>([])
   const [activeTooltip, setActiveTooltip] = useState<ActiveTooltip>(null)
-  const [breakdownTab, setBreakdownTab] = useState<'ALL' | 'DUE' | 'INTEREST' | 'PROFIT'>('ALL')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -204,27 +186,15 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
       financeApi.listDues(),
       financeApi.listInvestments(),
       financeApi.listLoans(),
-      financeApi.getSweetFundProgramme(),
-      financeApi.listSweetFundMembers(),
-      financeApi.listSweetFundPayments(),
-      financeApi.listMonthlyFundMembers(),
-      financeApi.listMonthlyFundCollections(),
-      financeApi.listPayments(),
       financeApi.listInstallments(),
     ])
-      .then(([mRes, iRes, tRes, dRes, invRes, lRes, sProg, sMem, sPay, mMem, mCol, payRes, instRes]) => {
+      .then(([mRes, iRes, tRes, dRes, invRes, lRes, instRes]) => {
         setMetrics(mRes)
         setInterests(iRes)
         setTenPercentEntries(tRes)
         setDues(dRes)
         setInvestments(invRes)
         setLoans(lRes)
-        setSweetProgramme(sProg)
-        setSweetMembers(sMem)
-        setSweetPayments(sPay)
-        setMonthlyMembers(mMem)
-        setMonthlyCollections(mCol)
-        setAllPayments(payRes)
         setInstallments(instRes)
       })
       .catch((err) => {
@@ -240,15 +210,10 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
 
   // Derived Core Accounting Totals
   const totalInvestment = investments.reduce((sum, inv) => sum + Number(inv.amount || 0), 0) || (metrics?.investmentReceived ?? 185000)
-  const recoveredPrincipal = allPayments.reduce((sum, p) => sum + Number(p.principal_allocation || 0), 0)
-  const availableCapitalPool = totalInvestment + recoveredPrincipal
-
   const totalInterest = interests.reduce((sum, i) => sum + Number(i.amount || 0), 0) || (metrics?.interestReceived ?? 4950)
   const totalProfit = tenPercentEntries.reduce((sum, t) => sum + Number(t.amount || 0), 0) || (metrics?.tenPercentProfit ?? 8970)
   const totalDue = dues.reduce((sum, d) => sum + Number(d.remaining_amount ?? d.amount ?? 0), 0) || (metrics?.outstandingDues ?? 12000)
 
-  // Custom Ledger Formula: DUE + PROFIT + INTEREST
-  const totalIncome = totalDue + totalProfit + totalInterest
   // Total Ledger Value: INVEST + INTEREST + PROFIT + DUE
   const totalLedgerValue = totalInvestment + totalInterest + totalProfit + totalDue
 
@@ -263,25 +228,8 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
   const workbookCashInHand = totalLedgerValue - totalLoansPrincipal
   const reconciledAvailableCash = workbookCashInHand - totalDue
 
-  // Monthly Fund (4 members, targets total ₹37,800)
-  const monthlyCollectedTotal =
-    monthlyMembers.reduce((sum, m) => sum + Number(m.total_collected || 0), 0) ||
-    monthlyCollections.reduce((sum, c) => sum + Number(c.amount || 0), 0)
-  const monthlyTargetTotal = monthlyMembers.reduce((sum, m) => sum + Number(m.target_amount || 0), 0) || 37800
-
-  // Sweet Fund (50 members, 50 weeks, target ₹5,15,000)
-  const sweetCollectedTotal =
-    sweetMembers.reduce((sum, m) => sum + Number(m.total_paid || 0), 0) ||
-    sweetPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0)
-  const sweetTargetTotal = sweetProgramme?.total_target || 515000
-
-  // Today & Collections
-  const todayStr = new Date().toISOString().slice(0, 10)
-  const todayCollections = allPayments
-    .filter((p) => (p.payment_date || '').slice(0, 10) === todayStr)
-    .reduce((sum, p) => sum + Number(p.amount || 0), 0)
-
   // Due Today & Overdue
+  const todayStr = new Date().toISOString().slice(0, 10)
   const dueTodayInsts = installments.filter((i) => (i.due_date || '').slice(0, 10) === todayStr && i.paid_amount < i.expected_amount)
   const dueTodayCount = dueTodayInsts.length
   const dueTodayAmount = dueTodayInsts.reduce((sum, i) => sum + (i.expected_amount - i.paid_amount), 0)
@@ -290,64 +238,9 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
   const overdueCount = overdueInsts.length
   const overdueAmount = overdueInsts.reduce((sum, i) => sum + (i.expected_amount - i.paid_amount), 0)
 
-  // Account status counts
-  const activeLoans = loans.filter((l) => l.status === 'active')
-  const closedLoans = loans.filter((l) => l.status === 'closed')
-
   const toggleTooltip = (key: ActiveTooltip) => {
     setActiveTooltip((prev) => (prev === key ? null : key))
   }
-
-  const incomeItems = useMemo(() => {
-    const list: Array<{
-      id: string
-      source: 'INTEREST' | 'PROFIT' | 'DUE'
-      customerName: string
-      accountInfo: string
-      amount: number
-      date: string
-    }> = []
-
-    interests.forEach((item) => {
-      list.push({
-        id: `int-${item.id}`,
-        source: 'INTEREST',
-        customerName: item.customer_name || 'Customer',
-        accountInfo: cleanEntrySubtitle(item.notes, item.ac_no ? `A/C #${item.ac_no}` : 'Interest Receipt'),
-        amount: Number(item.amount || 0),
-        date: item.entry_date,
-      })
-    })
-
-    tenPercentEntries.forEach((item) => {
-      list.push({
-        id: `ten-${item.id}`,
-        source: 'PROFIT',
-        customerName: item.particulars || 'Payer',
-        accountInfo: cleanEntrySubtitle(item.notes, item.main_sheet_no ? `Sheet #${item.main_sheet_no}` : '10% Profit'),
-        amount: Number(item.amount || 0),
-        date: item.entry_date,
-      })
-    })
-
-    dues.forEach((item) => {
-      list.push({
-        id: `due-${item.id}`,
-        source: 'DUE',
-        customerName: item.borrower_name || 'Borrower',
-        accountInfo: cleanEntrySubtitle(item.notes, 'Customer Due'),
-        amount: Number(item.remaining_amount ?? item.amount ?? 0),
-        date: item.due_date || '2026-10-01',
-      })
-    })
-
-    return list
-  }, [interests, tenPercentEntries, dues])
-
-  const filteredIncomeItems = useMemo(() => {
-    if (breakdownTab === 'ALL') return incomeItems
-    return incomeItems.filter((i) => i.source === breakdownTab)
-  }, [incomeItems, breakdownTab])
 
   return (
     <div className="page-shell">
@@ -373,7 +266,7 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
 
       {loading || !metrics ? (
         <div className="kpi-grid">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19].map((i) => (
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => (
             <div className="kpi-card" key={i} style={{ opacity: 0.5 }}>
               <span className="kpi-label">Loading…</span>
               <span className="kpi-value">—</span>
@@ -382,57 +275,7 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
         </div>
       ) : (
         <div className="kpi-grid">
-          {/* 1. CAPITAL POOL (Available Operational Capital) */}
-          <div
-            className={`kpi-card highlight-card${activeTooltip === 'CAPITAL_POOL' ? ' active-popover' : ''}`}
-            style={{ position: 'relative', zIndex: activeTooltip === 'CAPITAL_POOL' ? 100 : 1, cursor: 'pointer' }}
-            onMouseEnter={() => setActiveTooltip('CAPITAL_POOL')}
-            onMouseLeave={() => setActiveTooltip(null)}
-            onClick={() => toggleTooltip('CAPITAL_POOL')}
-          >
-            <CardHeader
-              title="CAPITAL POOL"
-              badgeText="Available"
-              badgeBg="#ecfdf5"
-              badgeColor="#047857"
-              tooltipKey="CAPITAL_POOL"
-              onToggle={toggleTooltip}
-            />
-            <span className="kpi-value" style={{ color: '#047857' }}>{currency.format(availableCapitalPool)}</span>
-            <span className="kpi-subtext">
-              {currency.format(totalInvestment)} capital + {currency.format(recoveredPrincipal)} recovered
-            </span>
-
-            {activeTooltip === 'CAPITAL_POOL' && (
-              <HoverPopover
-                title="Operational Capital Pool"
-                subtitle="Original partner investment plus recovered loan principal"
-                totalAmount={availableCapitalPool}
-                totalColor="#047857"
-                countLabel={`Principal Recovered: ${currency.format(recoveredPrincipal)}`}
-                align="left"
-                linkTo="/investments"
-                linkText="View Capital Pool Breakdown"
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8125rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.45rem 0.6rem', background: '#f8fafc', borderRadius: '6px' }}>
-                    <span>Original Investor Capital:</span>
-                    <strong>{currency.format(totalInvestment)}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.45rem 0.6rem', background: '#f8fafc', borderRadius: '6px' }}>
-                    <span>Principal Recovered from Loans:</span>
-                    <strong style={{ color: '#047857' }}>+{currency.format(recoveredPrincipal)}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.45rem 0.6rem', background: '#ecfdf5', borderRadius: '6px', fontWeight: 700 }}>
-                    <span>Total Available Operational Pool:</span>
-                    <span style={{ color: '#047857' }}>{currency.format(availableCapitalPool)}</span>
-                  </div>
-                </div>
-              </HoverPopover>
-            )}
-          </div>
-
-          {/* 2. ORIGINAL INVEST (Partner Capital Contributions) */}
+          {/* 1. INVEST */}
           <div
             className={`kpi-card${activeTooltip === 'INVEST' ? ' active-popover' : ''}`}
             style={{ position: 'relative', zIndex: activeTooltip === 'INVEST' ? 100 : 1, cursor: 'pointer' }}
@@ -441,7 +284,7 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
             onClick={() => toggleTooltip('INVEST')}
           >
             <CardHeader
-              title="ORIGINAL INVEST"
+              title="INVEST"
               badgeText="Partner"
               badgeBg="#eef2ff"
               badgeColor="#4338ca"
@@ -463,40 +306,36 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
                 linkText="View Full Investment Ledger"
               >
                 <div style={{ maxHeight: '260px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.375rem', paddingRight: '4px' }}>
-                  {investments.length === 0 ? (
-                    <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--muted)', textAlign: 'center', padding: '1rem' }}>No entries found</p>
-                  ) : (
-                    investments.map((item) => (
-                      <div
-                        key={item.id}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '0.45rem 0.6rem',
-                          background: '#f8fafc',
-                          borderRadius: '6px',
-                          fontSize: '0.8125rem',
-                        }}
-                      >
-                        <div style={{ minWidth: 0, paddingRight: '8px' }}>
-                          <div style={{ fontWeight: 600, color: 'var(--text)' }}>{item.investor_name}</div>
-                          <div style={{ fontSize: '0.71875rem', color: 'var(--muted)' }}>
-                            {cleanEntrySubtitle(item.notes, 'Partner Capital', item.entry_date)}
-                          </div>
-                        </div>
-                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                          <strong style={{ fontSize: '0.875rem', color: '#4338ca' }}>{currency.format(item.amount)}</strong>
+                  {investments.map((item) => (
+                    <div
+                      key={item.id}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '0.45rem 0.6rem',
+                        background: '#f8fafc',
+                        borderRadius: '6px',
+                        fontSize: '0.8125rem',
+                      }}
+                    >
+                      <div style={{ minWidth: 0, paddingRight: '8px' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--text)' }}>{item.investor_name}</div>
+                        <div style={{ fontSize: '0.71875rem', color: 'var(--muted)' }}>
+                          {cleanEntrySubtitle(item.notes, 'Partner Capital', item.entry_date)}
                         </div>
                       </div>
-                    ))
-                  )}
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <strong style={{ fontSize: '0.875rem', color: '#4338ca' }}>{currency.format(item.amount)}</strong>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </HoverPopover>
             )}
           </div>
 
-          {/* 3. INTEREST RECEIVED */}
+          {/* 2. INTREST COLLECTED */}
           <div
             className={`kpi-card${activeTooltip === 'INTEREST' ? ' active-popover' : ''}`}
             style={{ position: 'relative', zIndex: activeTooltip === 'INTEREST' ? 100 : 1, cursor: 'pointer' }}
@@ -505,7 +344,7 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
             onClick={() => toggleTooltip('INTEREST')}
           >
             <CardHeader
-              title="INTEREST"
+              title="INTREST COLLECTED"
               badgeText="Verified"
               badgeBg="#eff6ff"
               badgeColor="#1d4ed8"
@@ -560,71 +399,7 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
             )}
           </div>
 
-          {/* 4. 10% PROFIT RECEIVED */}
-          <div
-            className={`kpi-card${activeTooltip === 'PROFIT' ? ' active-popover' : ''}`}
-            style={{ position: 'relative', zIndex: activeTooltip === 'PROFIT' ? 100 : 1, cursor: 'pointer' }}
-            onMouseEnter={() => setActiveTooltip('PROFIT')}
-            onMouseLeave={() => setActiveTooltip(null)}
-            onClick={() => toggleTooltip('PROFIT')}
-          >
-            <CardHeader
-              title="10% PROFIT"
-              badgeText="Ledger"
-              badgeBg="#f0f9ff"
-              badgeColor="#0284c7"
-              tooltipKey="PROFIT"
-              onToggle={toggleTooltip}
-            />
-            <span className="kpi-value text-positive">{currency.format(totalProfit)}</span>
-            <span className="kpi-subtext">{tenPercentEntries.length} verified ledger entries ({currency.format(totalProfit)})</span>
-
-            {activeTooltip === 'PROFIT' && (
-              <HoverPopover
-                title="10% Profit Entries"
-                subtitle="Transactions classified as 10% profit from MAIN ledger"
-                totalAmount={totalProfit}
-                totalColor="#0284c7"
-                countLabel={`${tenPercentEntries.length} entries`}
-                align="left"
-                linkTo="/profit/ten-percent"
-                linkText="View 10% Profit Ledger"
-              >
-                <div style={{ maxHeight: '260px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.375rem', paddingRight: '4px' }}>
-                  {tenPercentEntries.length === 0 ? (
-                    <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--muted)', textAlign: 'center', padding: '1rem' }}>No entries found</p>
-                  ) : (
-                    tenPercentEntries.map((item) => (
-                      <div
-                        key={item.id}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '0.45rem 0.6rem',
-                          background: '#f8fafc',
-                          borderRadius: '6px',
-                          fontSize: '0.8125rem',
-                        }}
-                      >
-                        <div style={{ minWidth: 0, paddingRight: '8px' }}>
-                          <div style={{ fontWeight: 600, color: 'var(--text)' }}>{item.particulars}</div>
-                          <div style={{ fontSize: '0.71875rem', color: 'var(--muted)' }}>
-                            {cleanEntrySubtitle(item.notes, item.main_sheet_no ? `Sheet #${item.main_sheet_no}` : '10% Profit', item.entry_date)}
-                          </div>
-                        </div>
-                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                          <strong style={{ fontSize: '0.875rem', color: '#0284c7' }}>{currency.format(item.amount)}</strong>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </HoverPopover>
-            )}
-          </div>
-
-          {/* 5. OUTSTANDING DUES */}
+          {/* 3. DUE COLLECTED */}
           <div
             className={`kpi-card danger-card${activeTooltip === 'DUE' ? ' active-popover' : ''}`}
             style={{ position: 'relative', zIndex: activeTooltip === 'DUE' ? 100 : 1, cursor: 'pointer' }}
@@ -633,7 +408,7 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
             onClick={() => toggleTooltip('DUE')}
           >
             <CardHeader
-              title="DUE"
+              title="DUE COLLECTED"
               badgeText="Receivables"
               badgeBg="#fef2f2"
               badgeColor="#dc2626"
@@ -688,193 +463,71 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
             )}
           </div>
 
-          {/* 6. TOTAL INCOME (Custom Ledger Formula) */}
+          {/* 4. PROFIT 10% COLLECTED */}
           <div
-            className={`kpi-card accent-card${activeTooltip === 'INCOME' ? ' active-popover' : ''}`}
-            style={{ position: 'relative', zIndex: activeTooltip === 'INCOME' ? 100 : 1, cursor: 'pointer' }}
-            onMouseEnter={() => setActiveTooltip('INCOME')}
+            className={`kpi-card${activeTooltip === 'PROFIT' ? ' active-popover' : ''}`}
+            style={{ position: 'relative', zIndex: activeTooltip === 'PROFIT' ? 100 : 1, cursor: 'pointer' }}
+            onMouseEnter={() => setActiveTooltip('PROFIT')}
             onMouseLeave={() => setActiveTooltip(null)}
-            onClick={() => toggleTooltip('INCOME')}
+            onClick={() => toggleTooltip('PROFIT')}
           >
             <CardHeader
-              title="TOTAL INCOME"
-              badgeText="Formula"
-              badgeBg="#ecfdf5"
-              badgeColor="#047857"
-              tooltipKey="INCOME"
+              title="PROFIT 10% COLLECTED"
+              badgeText="Ledger"
+              badgeBg="#f0f9ff"
+              badgeColor="#0284c7"
+              tooltipKey="PROFIT"
               onToggle={toggleTooltip}
             />
-            <span className="kpi-value" style={{ color: '#047857' }}>
-              {currency.format(totalIncome)}
-            </span>
-            <span className="kpi-subtext">DUE + PROFIT + INTEREST</span>
+            <span className="kpi-value text-positive">{currency.format(totalProfit)}</span>
+            <span className="kpi-subtext">{tenPercentEntries.length} verified ledger entries ({currency.format(totalProfit)})</span>
 
-            {activeTooltip === 'INCOME' && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 8px)',
-                  left: 0,
-                  width: '440px',
-                  maxWidth: '92vw',
-                  background: '#ffffff',
-                  border: '1px solid var(--line, #e2e8f0)',
-                  borderRadius: '12px',
-                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.16), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                  padding: '1rem',
-                  zIndex: 9999,
-                  cursor: 'default',
-                  textAlign: 'left',
-                }}
-                onClick={(e) => e.stopPropagation()}
+            {activeTooltip === 'PROFIT' && (
+              <HoverPopover
+                title="10% Profit Entries"
+                subtitle="Transactions classified as 10% profit from MAIN ledger"
+                totalAmount={totalProfit}
+                totalColor="#0284c7"
+                countLabel={`${tenPercentEntries.length} entries`}
+                align="left"
+                linkTo="/profit/ten-percent"
+                linkText="View 10% Profit Ledger"
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--line, #e2e8f0)' }}>
-                  <div>
-                    <strong style={{ fontSize: '0.9375rem', color: 'var(--text)' }}>Total Income Sources</strong>
-                    <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--muted)' }}>Due + 10% Profit + Interest</p>
-                  </div>
-                  <strong style={{ fontSize: '1.125rem', color: '#047857' }}>{currency.format(totalIncome)}</strong>
-                </div>
-
-                {/* Filter Pills */}
-                <div style={{ display: 'flex', gap: '0.375rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={() => setBreakdownTab('ALL')}
-                    style={{
-                      padding: '3px 8px',
-                      fontSize: '0.75rem',
-                      borderRadius: '4px',
-                      border: 'none',
-                      background: breakdownTab === 'ALL' ? '#0f172a' : '#f1f5f9',
-                      color: breakdownTab === 'ALL' ? '#ffffff' : '#334155',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                    }}
-                  >
-                    All ({incomeItems.length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setBreakdownTab('DUE')}
-                    style={{
-                      padding: '3px 8px',
-                      fontSize: '0.75rem',
-                      borderRadius: '4px',
-                      border: 'none',
-                      background: breakdownTab === 'DUE' ? '#dc2626' : '#fee2e2',
-                      color: breakdownTab === 'DUE' ? '#ffffff' : '#991b1b',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                    }}
-                  >
-                    Due ({currency.format(totalDue)})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setBreakdownTab('PROFIT')}
-                    style={{
-                      padding: '3px 8px',
-                      fontSize: '0.75rem',
-                      borderRadius: '4px',
-                      border: 'none',
-                      background: breakdownTab === 'PROFIT' ? '#0284c7' : '#e0f2fe',
-                      color: breakdownTab === 'PROFIT' ? '#ffffff' : '#0369a1',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                    }}
-                  >
-                    Profit ({currency.format(totalProfit)})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setBreakdownTab('INTEREST')}
-                    style={{
-                      padding: '3px 8px',
-                      fontSize: '0.75rem',
-                      borderRadius: '4px',
-                      border: 'none',
-                      background: breakdownTab === 'INTEREST' ? '#1d4ed8' : '#dbeafe',
-                      color: breakdownTab === 'INTEREST' ? '#ffffff' : '#1e40af',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                    }}
-                  >
-                    Interest ({currency.format(totalInterest)})
-                  </button>
-                </div>
-
-                <div style={{ maxHeight: '240px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.375rem', paddingRight: '4px' }}>
-                  {filteredIncomeItems.map((item) => (
-                    <div
-                      key={item.id}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '0.45rem 0.6rem',
-                        background: '#f8fafc',
-                        borderRadius: '6px',
-                        fontSize: '0.8125rem',
-                      }}
-                    >
-                      <div style={{ minWidth: 0, paddingRight: '8px' }}>
-                        <div style={{ fontWeight: 600, color: 'var(--text)' }}>{item.customerName}</div>
-                        <div style={{ fontSize: '0.71875rem', color: 'var(--muted)' }}>
-                          {item.accountInfo} • {item.date}
+                <div style={{ maxHeight: '260px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.375rem', paddingRight: '4px' }}>
+                  {tenPercentEntries.length === 0 ? (
+                    <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--muted)', textAlign: 'center', padding: '1rem' }}>No entries found</p>
+                  ) : (
+                    tenPercentEntries.map((item) => (
+                      <div
+                        key={item.id}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '0.45rem 0.6rem',
+                          background: '#f8fafc',
+                          borderRadius: '6px',
+                          fontSize: '0.8125rem',
+                        }}
+                      >
+                        <div style={{ minWidth: 0, paddingRight: '8px' }}>
+                          <div style={{ fontWeight: 600, color: 'var(--text)' }}>{item.particulars}</div>
+                          <div style={{ fontSize: '0.71875rem', color: 'var(--muted)' }}>
+                            {cleanEntrySubtitle(item.notes, item.main_sheet_no ? `Sheet #${item.main_sheet_no}` : '10% Profit', item.entry_date)}
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <strong style={{ fontSize: '0.875rem', color: '#0284c7' }}>{currency.format(item.amount)}</strong>
                         </div>
                       </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <span
-                          style={{
-                            fontSize: '0.6875rem',
-                            fontWeight: 700,
-                            padding: '1px 5px',
-                            borderRadius: '3px',
-                            background: item.source === 'DUE' ? '#fee2e2' : item.source === 'PROFIT' ? '#e0f2fe' : '#dbeafe',
-                            color: item.source === 'DUE' ? '#991b1b' : item.source === 'PROFIT' ? '#0369a1' : '#1e40af',
-                            marginRight: '6px',
-                          }}
-                        >
-                          {item.source}
-                        </span>
-                        <strong style={{ fontSize: '0.875rem', color: item.source === 'DUE' ? '#dc2626' : '#047857' }}>
-                          {currency.format(item.amount)}
-                        </strong>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
-
-                <div style={{ marginTop: '0.75rem', paddingTop: '0.5rem', borderTop: '1px solid var(--line, #e2e8f0)', textAlign: 'center' }}>
-                  <Link
-                    to="/total-income"
-                    style={{ fontSize: '0.75rem', fontWeight: 600, color: '#2563eb', textDecoration: 'none' }}
-                  >
-                    View Dedicated Total Income Page →
-                  </Link>
-                </div>
-              </div>
+              </HoverPopover>
             )}
           </div>
 
-          {/* 7. TOTAL LEDGER VALUE */}
-          <Link
-            to="/reconciliation"
-            className="kpi-card highlight-card"
-            style={{ position: 'relative', zIndex: 1, textDecoration: 'none' }}
-          >
-            <CardHeader
-              title="TOTAL LEDGER"
-              badgeText="Gross"
-              badgeBg="#f1f5f9"
-              badgeColor="#334155"
-            />
-            <span className="kpi-value" style={{ color: '#0f172a' }}>{currency.format(totalLedgerValue)}</span>
-            <span className="kpi-subtext">INVEST + INTEREST + PROFIT + DUE</span>
-          </Link>
-
-          {/* 8. LOAN PRINCIPAL ISSUED */}
+          {/* 5. LOAN */}
           <div
             className={`kpi-card${activeTooltip === 'LOAN' ? ' active-popover' : ''}`}
             style={{ position: 'relative', zIndex: activeTooltip === 'LOAN' ? 100 : 1, cursor: 'pointer' }}
@@ -883,15 +536,15 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
             onClick={() => toggleTooltip('LOAN')}
           >
             <CardHeader
-              title="LOAN PRINCIPAL"
-              badgeText="Deployed"
+              title="LOAN"
+              badgeText="Issued"
               badgeBg="#f5f3ff"
               badgeColor="#6d28d9"
               tooltipKey="LOAN"
               onToggle={toggleTooltip}
             />
             <span className="kpi-value">{currency.format(totalLoansPrincipal)}</span>
-            <span className="kpi-subtext">{loans.length} loan accounts ledgered ({currency.format(totalLoansPrincipal)})</span>
+            <span className="kpi-subtext">{loans.length} accounts (13 Daily + 4 Weekly)</span>
 
             {activeTooltip === 'LOAN' && (
               <HoverPopover
@@ -952,7 +605,7 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
             )}
           </div>
 
-          {/* 9. CASH IN BANK (Reported Nominal Balance) */}
+          {/* 6. CASH IN BANK */}
           <Link to="/reconciliation" className="kpi-card highlight-card" style={{ position: 'relative', zIndex: 1, textDecoration: 'none' }}>
             <CardHeader
               title="CASH IN BANK"
@@ -964,10 +617,10 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
             <span className="kpi-subtext">TOTAL LEDGER − LOAN PRINCIPAL</span>
           </Link>
 
-          {/* 10. LIQUID CASH (Reconciled Available Cash) */}
+          {/* 7. BALANCE */}
           <Link to="/reconciliation" className="kpi-card highlight-card" style={{ position: 'relative', zIndex: 1, textDecoration: 'none', borderColor: '#3b82f6', background: '#f0f9ff' }}>
             <CardHeader
-              title="LIQUID CASH"
+              title="BALANCE"
               badgeText="Reconciled"
               badgeBg="#dbeafe"
               badgeColor="#1d4ed8"
@@ -976,67 +629,7 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
             <span className="kpi-subtext">Excludes ₹12,000 uncollected dues</span>
           </Link>
 
-          {/* 11. DAILY LOAN ACCOUNTS */}
-          <div
-            className={`kpi-card${activeTooltip === 'DAILY_LOANS' ? ' active-popover' : ''}`}
-            style={{ position: 'relative', zIndex: activeTooltip === 'DAILY_LOANS' ? 100 : 1, cursor: 'pointer' }}
-            onMouseEnter={() => setActiveTooltip('DAILY_LOANS')}
-            onMouseLeave={() => setActiveTooltip(null)}
-            onClick={() => toggleTooltip('DAILY_LOANS')}
-          >
-            <CardHeader
-              title="DAILY LOANS"
-              badgeText="10-Day"
-              badgeBg="#eff6ff"
-              badgeColor="#1d4ed8"
-              tooltipKey="DAILY_LOANS"
-              onToggle={toggleTooltip}
-            />
-            <span className="kpi-value" style={{ color: '#1d4ed8' }}>{currency.format(dailyLoansPrincipal)}</span>
-            <span className="kpi-subtext">{dailyLoans.length} accounts ledgered ({currency.format(dailyLoansPrincipal)})</span>
-
-            {activeTooltip === 'DAILY_LOANS' && (
-              <HoverPopover
-                title="Daily Loan Accounts"
-                subtitle="10-day interest cycle loan portfolio"
-                totalAmount={dailyLoansPrincipal}
-                totalColor="#1d4ed8"
-                countLabel={`${dailyLoans.length} daily accounts`}
-                align="right"
-                linkTo="/daily"
-                linkText="View Daily Loans Page"
-              >
-                <div style={{ maxHeight: '260px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.375rem', paddingRight: '4px' }}>
-                  {dailyLoans.map((item) => (
-                    <div
-                      key={item.id}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '0.45rem 0.6rem',
-                        background: '#f8fafc',
-                        borderRadius: '6px',
-                        fontSize: '0.8125rem',
-                      }}
-                    >
-                      <div style={{ minWidth: 0, paddingRight: '8px' }}>
-                        <div style={{ fontWeight: 600, color: 'var(--text)' }}>{item.customer_name}</div>
-                        <div style={{ fontSize: '0.71875rem', color: 'var(--muted)' }}>
-                          {item.ac_no ? `A/C #${item.ac_no}` : `Sheet #${item.main_sheet_no}`} • {item.loan_date}
-                        </div>
-                      </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <strong style={{ fontSize: '0.875rem', color: '#1d4ed8' }}>{currency.format(item.principal)}</strong>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </HoverPopover>
-            )}
-          </div>
-
-          {/* 12. WEEKLY LOAN ACCOUNTS */}
+          {/* 8. WEEKLY LOANS */}
           <div
             className={`kpi-card${activeTooltip === 'WEEKLY_LOANS' ? ' active-popover' : ''}`}
             style={{ position: 'relative', zIndex: activeTooltip === 'WEEKLY_LOANS' ? 100 : 1, cursor: 'pointer' }}
@@ -1096,176 +689,67 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
             )}
           </div>
 
-          {/* 13. MONTHLY FUND PROGRESS */}
+          {/* 9. DAILY LOANS */}
           <div
-            className={`kpi-card highlight-card${activeTooltip === 'MONTHLY_FUND' ? ' active-popover' : ''}`}
-            style={{
-              position: 'relative',
-              zIndex: activeTooltip === 'MONTHLY_FUND' ? 100 : 1,
-              cursor: 'pointer',
-              background: '#f0fdfa',
-              borderColor: '#14b8a6',
-            }}
-            onMouseEnter={() => setActiveTooltip('MONTHLY_FUND')}
+            className={`kpi-card${activeTooltip === 'DAILY_LOANS' ? ' active-popover' : ''}`}
+            style={{ position: 'relative', zIndex: activeTooltip === 'DAILY_LOANS' ? 100 : 1, cursor: 'pointer' }}
+            onMouseEnter={() => setActiveTooltip('DAILY_LOANS')}
             onMouseLeave={() => setActiveTooltip(null)}
-            onClick={() => toggleTooltip('MONTHLY_FUND')}
+            onClick={() => toggleTooltip('DAILY_LOANS')}
           >
             <CardHeader
-              title="MONTHLY FUND"
-              badgeText="Targets"
-              badgeBg="#ccfbf1"
-              badgeColor="#0f766e"
-              tooltipKey="MONTHLY_FUND"
+              title="DAILY LOANS"
+              badgeText="10-Day"
+              badgeBg="#eff6ff"
+              badgeColor="#1d4ed8"
+              tooltipKey="DAILY_LOANS"
               onToggle={toggleTooltip}
             />
-            <span className="kpi-value" style={{ color: '#0f766e' }}>
-              {currency.format(monthlyCollectedTotal)}
-            </span>
-            <span className="kpi-subtext">
-              Target: {currency.format(monthlyTargetTotal)} ({monthlyMembers.length} members)
-            </span>
+            <span className="kpi-value" style={{ color: '#1d4ed8' }}>{currency.format(dailyLoansPrincipal)}</span>
+            <span className="kpi-subtext">{dailyLoans.length} accounts ledgered ({currency.format(dailyLoansPrincipal)})</span>
 
-            {activeTooltip === 'MONTHLY_FUND' && (
+            {activeTooltip === 'DAILY_LOANS' && (
               <HoverPopover
-                title="Monthly Fund Targets & Collections"
-                subtitle="Daily fixed collections towards individual targets"
-                totalAmount={monthlyCollectedTotal}
-                totalColor="#0f766e"
-                countLabel={`${monthlyMembers.length} target members`}
+                title="Daily Loan Accounts"
+                subtitle="10-day interest cycle loan portfolio"
+                totalAmount={dailyLoansPrincipal}
+                totalColor="#1d4ed8"
+                countLabel={`${dailyLoans.length} daily accounts`}
                 align="right"
-                linkTo="/funds/monthly"
-                linkText="View Full Monthly Fund Ledger"
+                linkTo="/daily"
+                linkText="View Daily Loans Page"
               >
                 <div style={{ maxHeight: '260px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.375rem', paddingRight: '4px' }}>
-                  {monthlyMembers.length === 0 ? (
-                    <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--muted)', textAlign: 'center', padding: '1rem' }}>
-                      No monthly fund members enrolled yet.
-                    </p>
-                  ) : (
-                    monthlyMembers.map((item) => (
-                      <div
-                        key={item.id}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '0.45rem 0.6rem',
-                          background: '#f8fafc',
-                          borderRadius: '6px',
-                          fontSize: '0.8125rem',
-                        }}
-                      >
-                        <div style={{ minWidth: 0, paddingRight: '8px' }}>
-                          <div style={{ fontWeight: 600, color: 'var(--text)' }}>{item.name}</div>
-                          <div style={{ fontSize: '0.71875rem', color: 'var(--muted)' }}>
-                            Target: {currency.format(item.target_amount)}
-                          </div>
-                        </div>
-                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                          <strong style={{ fontSize: '0.875rem', color: '#0f766e' }}>{currency.format(item.target_amount)}</strong>
-                          <span style={{ display: 'block', fontSize: '0.6875rem', color: 'var(--muted)' }}>
-                            {currency.format(item.total_collected)} recd
-                          </span>
+                  {dailyLoans.map((item) => (
+                    <div
+                      key={item.id}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '0.45rem 0.6rem',
+                        background: '#f8fafc',
+                        borderRadius: '6px',
+                        fontSize: '0.8125rem',
+                      }}
+                    >
+                      <div style={{ minWidth: 0, paddingRight: '8px' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--text)' }}>{item.customer_name}</div>
+                        <div style={{ fontSize: '0.71875rem', color: 'var(--muted)' }}>
+                          {item.ac_no ? `A/C #${item.ac_no}` : `Sheet #${item.main_sheet_no}`} • {item.loan_date}
                         </div>
                       </div>
-                    ))
-                  )}
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <strong style={{ fontSize: '0.875rem', color: '#1d4ed8' }}>{currency.format(item.principal)}</strong>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </HoverPopover>
             )}
           </div>
 
-          {/* 14. SWEET FUND PROGRESS */}
-          <div
-            className={`kpi-card highlight-card${activeTooltip === 'SWEET_FUND' ? ' active-popover' : ''}`}
-            style={{
-              position: 'relative',
-              zIndex: activeTooltip === 'SWEET_FUND' ? 100 : 1,
-              cursor: 'pointer',
-              background: '#fffdf5',
-              borderColor: '#f59e0b',
-            }}
-            onMouseEnter={() => setActiveTooltip('SWEET_FUND')}
-            onMouseLeave={() => setActiveTooltip(null)}
-            onClick={() => toggleTooltip('SWEET_FUND')}
-          >
-            <CardHeader
-              title="SWEET FUND"
-              badgeText="Diwali"
-              badgeBg="#fef3c7"
-              badgeColor="#b45309"
-              tooltipKey="SWEET_FUND"
-              onToggle={toggleTooltip}
-            />
-            <span className="kpi-value" style={{ color: '#b45309' }}>
-              {currency.format(sweetCollectedTotal)}
-            </span>
-            <span className="kpi-subtext">
-              Target: {currency.format(sweetTargetTotal)} (50 weeks)
-            </span>
-
-            {activeTooltip === 'SWEET_FUND' && (
-              <HoverPopover
-                title="Diwali Sweet Fund Programme"
-                subtitle="50-week contribution scheme"
-                totalAmount={sweetCollectedTotal}
-                totalColor="#b45309"
-                countLabel={`Target: ${currency.format(sweetTargetTotal)}`}
-                align="right"
-                linkTo="/funds/sweet"
-                linkText="View Full Sweet Fund Programme"
-              >
-                <div style={{ maxHeight: '260px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.375rem', paddingRight: '4px' }}>
-                  {sweetMembers.length === 0 ? (
-                    <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--muted)', textAlign: 'center', padding: '1rem' }}>
-                      Ready for 50-member Sweet Fund participant enrollment or Excel import.
-                    </p>
-                  ) : (
-                    sweetMembers.map((item) => (
-                      <div
-                        key={item.id}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '0.45rem 0.6rem',
-                          background: '#f8fafc',
-                          borderRadius: '6px',
-                          fontSize: '0.8125rem',
-                        }}
-                      >
-                        <div style={{ minWidth: 0, paddingRight: '8px' }}>
-                          <div style={{ fontWeight: 600, color: 'var(--text)' }}>
-                            #{item.member_number} {item.member_name}
-                          </div>
-                          <div style={{ fontSize: '0.71875rem', color: 'var(--muted)' }}>
-                            Target: {currency.format(sweetProgramme?.target_per_member || 10300)}
-                          </div>
-                        </div>
-                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                          <strong style={{ fontSize: '0.875rem', color: '#b45309' }}>{currency.format(item.total_paid)}</strong>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </HoverPopover>
-            )}
-          </div>
-
-          {/* 15. TODAY'S COLLECTIONS */}
-          <Link to="/payments" className="kpi-card" style={{ position: 'relative', zIndex: 1, textDecoration: 'none' }}>
-            <CardHeader
-              title="TODAY'S IN"
-              badgeText="Live"
-              badgeBg="#ecfdf5"
-              badgeColor="#047857"
-            />
-            <span className="kpi-value" style={{ color: '#047857' }}>{currency.format(todayCollections)}</span>
-            <span className="kpi-subtext">Collections received today</span>
-          </Link>
-
-          {/* 16. DUE TODAY */}
+          {/* 10. DUE TODAY */}
           <Link to="/reminders" className="kpi-card warning-card" style={{ position: 'relative', zIndex: 1, textDecoration: 'none' }}>
             <CardHeader
               title="DUE TODAY"
@@ -1277,7 +761,7 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
             <span className="kpi-subtext">{dueTodayCount} installment obligations due today</span>
           </Link>
 
-          {/* 17. OVERDUE PAYMENTS */}
+          {/* 11. OVERDUE */}
           <Link to="/reminders" className="kpi-card danger-card" style={{ position: 'relative', zIndex: 1, textDecoration: 'none' }}>
             <CardHeader
               title="OVERDUE"
@@ -1287,30 +771,6 @@ export function DashboardPage({ onOpenNewLoan: _onOpenNewLoan }: Props) {
             />
             <span className="kpi-value text-danger">{currency.format(overdueAmount)}</span>
             <span className="kpi-subtext">{overdueCount} installments past due date</span>
-          </Link>
-
-          {/* 18. ACTIVE ACCOUNTS */}
-          <Link to="/active-accounts" className="kpi-card success-card" style={{ position: 'relative', zIndex: 1, textDecoration: 'none' }}>
-            <CardHeader
-              title="ACTIVE LOANS"
-              badgeText="Active"
-              badgeBg="#eaf7ee"
-              badgeColor="#16803c"
-            />
-            <span className="kpi-value" style={{ color: '#16803c' }}>{activeLoans.length} Active</span>
-            <span className="kpi-subtext">Active loan customer accounts</span>
-          </Link>
-
-          {/* 19. COMPLETED ACCOUNTS */}
-          <Link to="/closed-accounts" className="kpi-card" style={{ position: 'relative', zIndex: 1, textDecoration: 'none' }}>
-            <CardHeader
-              title="COMPLETED LOANS"
-              badgeText="Closed"
-              badgeBg="#f1f5f9"
-              badgeColor="#64748b"
-            />
-            <span className="kpi-value" style={{ color: '#64748b' }}>{closedLoans.length} Closed</span>
-            <span className="kpi-subtext">Fully settled & closed accounts</span>
           </Link>
         </div>
       )}
