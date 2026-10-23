@@ -210,6 +210,7 @@ export function WeeklyPage({ onOpenNewLoan }: Props) {
 
       {showPayModal && selectedLoan && (
         <MarkPaidModal
+          isOpen={showPayModal}
           loan={selectedLoan}
           onClose={() => {
             setShowPayModal(false)
