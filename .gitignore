@@ -17,6 +17,7 @@ dist-ssr
 
 # Private finance exports created by the clean-start admin script
 backups/
+finance-extraction-output/
 
 
 # Editor directories and files

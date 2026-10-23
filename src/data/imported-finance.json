@@ -1,27 +1,881 @@
 {
   "source": {
-    "fileName": "",
-    "sha256": "",
-    "importedAt": ""
+    "fileName": "NISHANTH-2026.xlsx",
+    "sha256": "fa029f2b747256bab5a35ea51ea49e6348c712ad6da22d4c76d69c7cca9c5cd5",
+    "importedAt": "2026-10-23T07:36:15.086Z"
   },
   "verification": {
-    "mainRows": 0,
-    "dailyCount": 0,
-    "dailyPrincipal": 0,
-    "dailyMainSheetNos": [],
-    "weeklyCount": 0,
-    "weeklyPrincipal": 0,
-    "weeklyMainSheetNos": [],
-    "tenPercentCount": 0,
-    "tenPercentProfit": 0
+    "mainRows": 17,
+    "dailyCount": 13,
+    "dailyPrincipal": 108000,
+    "dailyMainSheetNos": [
+      1,
+      2,
+      3,
+      7,
+      10,
+      6,
+      3,
+      7,
+      5,
+      5,
+      5,
+      5,
+      12
+    ],
+    "weeklyCount": 4,
+    "weeklyPrincipal": 54000,
+    "weeklyMainSheetNos": [
+      8,
+      9,
+      11,
+      4
+    ],
+    "tenPercentCount": 24,
+    "tenPercentProfit": 8970,
+    "investmentCount": 8,
+    "investmentTotal": 185000,
+    "interestCount": 9,
+    "interestTotal": 4950,
+    "duesCount": 6,
+    "duesTotal": 12000,
+    "totalLoansCount": 17,
+    "totalPrincipal": 162000
   },
   "ledgerSummary": {
-    "cashInBank": 0,
-    "loanReceived": 0,
-    "outstanding": 0,
-    "creditGrandTotal": 0
+    "cashInBank": 48920,
+    "loanReceived": 40000,
+    "outstanding": 166150,
+    "creditGrandTotal": 210920,
+    "investmentTotal": 185000,
+    "interestTotal": 4950,
+    "tenPercentTotal": 8970,
+    "duesTotal": 12000,
+    "loansPrincipalTotal": 162000,
+    "workbookTotalLedger": 210920,
+    "workbookCashInHand": 48920,
+    "reconciledAvailableCash": 36920
   },
-  "mainTransactions": [],
-  "tenPercentEntries": [],
-  "loans": []
+  "mainTransactions": [
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R3",
+      "mainSheetNo": 1,
+      "date": "2026-09-21",
+      "particulars": "YUVARAJ-DMK",
+      "mode": "D",
+      "debit": 10000,
+      "credit": 0,
+      "remarks": null,
+      "category": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R4",
+      "mainSheetNo": 2,
+      "date": "2026-09-21",
+      "particulars": "KARUPPASAMY",
+      "mode": "D",
+      "debit": 10000,
+      "credit": 0,
+      "remarks": null,
+      "category": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R5",
+      "mainSheetNo": 3,
+      "date": "2026-09-22",
+      "particulars": "KAVITHA",
+      "mode": "D",
+      "debit": 15000,
+      "credit": 0,
+      "remarks": null,
+      "category": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R6",
+      "mainSheetNo": 7,
+      "date": "2026-10-12",
+      "particulars": "KALYANAM",
+      "mode": "D",
+      "debit": 15000,
+      "credit": 0,
+      "remarks": null,
+      "category": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R7",
+      "mainSheetNo": 10,
+      "date": "2026-10-13",
+      "particulars": "RAJA",
+      "mode": "D",
+      "debit": 3000,
+      "credit": 0,
+      "remarks": null,
+      "category": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R8",
+      "mainSheetNo": 6,
+      "date": "2026-10-01",
+      "particulars": "PRAKASH",
+      "mode": "D",
+      "debit": 0,
+      "credit": 0,
+      "remarks": "A/C CLOSED",
+      "category": null,
+      "cleared": true
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R9",
+      "mainSheetNo": 3,
+      "date": "2026-10-04",
+      "particulars": "KAVITHA",
+      "mode": "D",
+      "debit": 20000,
+      "credit": 0,
+      "remarks": null,
+      "category": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R10",
+      "mainSheetNo": 7,
+      "date": "2026-10-06",
+      "particulars": "KALYANAM",
+      "mode": "D",
+      "debit": 15000,
+      "credit": 0,
+      "remarks": null,
+      "category": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R11",
+      "mainSheetNo": 5,
+      "date": "2026-09-28",
+      "particulars": "PATTANI",
+      "mode": "D",
+      "debit": 0,
+      "credit": 0,
+      "remarks": "A/C CLOSED",
+      "category": null,
+      "cleared": true
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R12",
+      "mainSheetNo": 5,
+      "date": "2026-10-01",
+      "particulars": "PATTANI",
+      "mode": "D",
+      "debit": 0,
+      "credit": 0,
+      "remarks": "A/C CLOSED",
+      "category": null,
+      "cleared": true
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R13",
+      "mainSheetNo": 5,
+      "date": "2026-10-02",
+      "particulars": "PATTANI",
+      "mode": "D",
+      "debit": 0,
+      "credit": 0,
+      "remarks": "A/C CLOSED",
+      "category": null,
+      "cleared": true
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R14",
+      "mainSheetNo": 5,
+      "date": "2026-10-05",
+      "particulars": "PATTANI",
+      "mode": "D",
+      "debit": 0,
+      "credit": 0,
+      "remarks": "A/C CLOSED",
+      "category": null,
+      "cleared": true
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R15",
+      "mainSheetNo": 8,
+      "date": "2026-10-07",
+      "particulars": "SHANTHI-PATTAN",
+      "mode": "W",
+      "debit": 9000,
+      "credit": 0,
+      "remarks": null,
+      "category": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R16",
+      "mainSheetNo": 9,
+      "date": "2026-10-09",
+      "particulars": "DIVYA",
+      "mode": "W",
+      "debit": 9000,
+      "credit": 0,
+      "remarks": null,
+      "category": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R17",
+      "mainSheetNo": 11,
+      "date": "2026-10-17",
+      "particulars": "DEVI-AATHA",
+      "mode": "W",
+      "debit": 9000,
+      "credit": 0,
+      "remarks": null,
+      "category": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R18",
+      "mainSheetNo": 4,
+      "date": "2026-09-27",
+      "particulars": "AJITH",
+      "mode": "W",
+      "debit": 27000,
+      "credit": 0,
+      "remarks": null,
+      "category": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R19",
+      "mainSheetNo": 12,
+      "date": "2026-10-19",
+      "particulars": "GOVIND",
+      "mode": "D",
+      "debit": 20000,
+      "credit": 0,
+      "remarks": null,
+      "category": null,
+      "cleared": false
+    }
+  ],
+  "loans": [
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R3",
+      "mainSheetNo": 1,
+      "acNo": 1,
+      "customerName": "YUVARAJ-DMK",
+      "mode": "D",
+      "loanDate": "2026-09-21",
+      "principal": 10000,
+      "sourceCredit": 0,
+      "sourceRemarks": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R4",
+      "mainSheetNo": 2,
+      "acNo": 2,
+      "customerName": "KARUPPASAMY",
+      "mode": "D",
+      "loanDate": "2026-09-21",
+      "principal": 10000,
+      "sourceCredit": 0,
+      "sourceRemarks": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R5",
+      "mainSheetNo": 3,
+      "acNo": 3,
+      "customerName": "KAVITHA",
+      "mode": "D",
+      "loanDate": "2026-09-22",
+      "principal": 15000,
+      "sourceCredit": 0,
+      "sourceRemarks": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R6",
+      "mainSheetNo": 7,
+      "acNo": 7,
+      "customerName": "KALYANAM",
+      "mode": "D",
+      "loanDate": "2026-10-12",
+      "principal": 15000,
+      "sourceCredit": 0,
+      "sourceRemarks": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R7",
+      "mainSheetNo": 10,
+      "acNo": 10,
+      "customerName": "RAJA",
+      "mode": "D",
+      "loanDate": "2026-10-13",
+      "principal": 3000,
+      "sourceCredit": 0,
+      "sourceRemarks": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R8",
+      "mainSheetNo": 6,
+      "acNo": 6,
+      "customerName": "PRAKASH",
+      "mode": "D",
+      "loanDate": "2026-10-01",
+      "principal": 0,
+      "sourceCredit": 0,
+      "sourceRemarks": "A/C CLOSED",
+      "cleared": true
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R9",
+      "mainSheetNo": 3,
+      "acNo": 3,
+      "customerName": "KAVITHA",
+      "mode": "D",
+      "loanDate": "2026-10-04",
+      "principal": 20000,
+      "sourceCredit": 0,
+      "sourceRemarks": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R10",
+      "mainSheetNo": 7,
+      "acNo": 7,
+      "customerName": "KALYANAM",
+      "mode": "D",
+      "loanDate": "2026-10-06",
+      "principal": 15000,
+      "sourceCredit": 0,
+      "sourceRemarks": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R11",
+      "mainSheetNo": 5,
+      "acNo": 5,
+      "customerName": "PATTANI",
+      "mode": "D",
+      "loanDate": "2026-09-28",
+      "principal": 0,
+      "sourceCredit": 0,
+      "sourceRemarks": "A/C CLOSED",
+      "cleared": true
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R12",
+      "mainSheetNo": 5,
+      "acNo": 5,
+      "customerName": "PATTANI",
+      "mode": "D",
+      "loanDate": "2026-10-01",
+      "principal": 0,
+      "sourceCredit": 0,
+      "sourceRemarks": "A/C CLOSED",
+      "cleared": true
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R13",
+      "mainSheetNo": 5,
+      "acNo": 5,
+      "customerName": "PATTANI",
+      "mode": "D",
+      "loanDate": "2026-10-02",
+      "principal": 0,
+      "sourceCredit": 0,
+      "sourceRemarks": "A/C CLOSED",
+      "cleared": true
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R14",
+      "mainSheetNo": 5,
+      "acNo": 5,
+      "customerName": "PATTANI",
+      "mode": "D",
+      "loanDate": "2026-10-05",
+      "principal": 0,
+      "sourceCredit": 0,
+      "sourceRemarks": "A/C CLOSED",
+      "cleared": true
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R15",
+      "mainSheetNo": 8,
+      "acNo": 8,
+      "customerName": "SHANTHI-PATTAN",
+      "mode": "W",
+      "loanDate": "2026-10-07",
+      "principal": 9000,
+      "sourceCredit": 0,
+      "sourceRemarks": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R16",
+      "mainSheetNo": 9,
+      "acNo": 9,
+      "customerName": "DIVYA",
+      "mode": "W",
+      "loanDate": "2026-10-09",
+      "principal": 9000,
+      "sourceCredit": 0,
+      "sourceRemarks": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R17",
+      "mainSheetNo": 11,
+      "acNo": 11,
+      "customerName": "DEVI-AATHA",
+      "mode": "W",
+      "loanDate": "2026-10-17",
+      "principal": 9000,
+      "sourceCredit": 0,
+      "sourceRemarks": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R18",
+      "mainSheetNo": 4,
+      "acNo": 4,
+      "customerName": "AJITH",
+      "mode": "W",
+      "loanDate": "2026-09-27",
+      "principal": 27000,
+      "sourceCredit": 0,
+      "sourceRemarks": null,
+      "cleared": false
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:LOAN:R19",
+      "mainSheetNo": 12,
+      "acNo": 12,
+      "customerName": "GOVIND",
+      "mode": "D",
+      "loanDate": "2026-10-19",
+      "principal": 20000,
+      "sourceCredit": 0,
+      "sourceRemarks": null,
+      "cleared": false
+    }
+  ],
+  "investments": [
+    {
+      "id": "inv-NISHANTH-2026.xlsx-R3",
+      "entry_date": "2026-09-20",
+      "investor_name": "PONNIYAN",
+      "amount": 27000,
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R3:INVESTMENT",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "inv-NISHANTH-2026.xlsx-R4",
+      "entry_date": "2026-09-21",
+      "investor_name": "SATHISH",
+      "amount": 13000,
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R4:INVESTMENT",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "inv-NISHANTH-2026.xlsx-R5",
+      "entry_date": "2026-09-24",
+      "investor_name": "RATHIKA",
+      "amount": 50000,
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R5:INVESTMENT",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "inv-NISHANTH-2026.xlsx-R6",
+      "entry_date": "2026-09-24",
+      "investor_name": "GURUSAMY",
+      "amount": 30000,
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R6:INVESTMENT",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "inv-NISHANTH-2026.xlsx-R7",
+      "entry_date": "2026-09-30",
+      "investor_name": "JYOTHIMANI",
+      "amount": 10000,
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R7:INVESTMENT",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "inv-NISHANTH-2026.xlsx-R8",
+      "entry_date": "2026-10-04",
+      "investor_name": "SATHISH-THAND",
+      "amount": 25000,
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R8:INVESTMENT",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "inv-NISHANTH-2026.xlsx-R9",
+      "entry_date": "2026-10-12",
+      "investor_name": "SIVARAJ",
+      "amount": 10000,
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R9:INVESTMENT",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "inv-NISHANTH-2026.xlsx-R10",
+      "entry_date": "2026-10-17",
+      "investor_name": "THANGARAJ",
+      "amount": 20000,
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R10:INVESTMENT",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    }
+  ],
+  "interests": [
+    {
+      "id": "interest-NISHANTH-2026.xlsx-R3",
+      "entry_date": "2026-10-01",
+      "customer_name": "YUVARAJ-DMK",
+      "ac_no": 17,
+      "amount": 500,
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R3:INTEREST",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "interest-NISHANTH-2026.xlsx-R4",
+      "entry_date": "2026-10-01",
+      "customer_name": "PATTANI",
+      "ac_no": 18,
+      "amount": 90,
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R4:INTEREST",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "interest-NISHANTH-2026.xlsx-R5",
+      "entry_date": "2026-10-01",
+      "customer_name": "PATTANI",
+      "ac_no": 19,
+      "amount": 60,
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R5:INTEREST",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "interest-NISHANTH-2026.xlsx-R6",
+      "entry_date": "2026-10-01",
+      "customer_name": "KAVITHA",
+      "ac_no": 20,
+      "amount": 500,
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R6:INTEREST",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "interest-NISHANTH-2026.xlsx-R7",
+      "entry_date": "2026-10-01",
+      "customer_name": "PATTANI",
+      "ac_no": 24,
+      "amount": 200,
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R7:INTEREST",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "interest-NISHANTH-2026.xlsx-R8",
+      "entry_date": "2026-10-01",
+      "customer_name": "KARUPPASAMY",
+      "ac_no": 34,
+      "amount": 1000,
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R8:INTEREST",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "interest-NISHANTH-2026.xlsx-R9",
+      "entry_date": "2026-10-01",
+      "customer_name": "YUVARAJ-DMK",
+      "ac_no": 41,
+      "amount": 500,
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R9:INTEREST",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "interest-NISHANTH-2026.xlsx-R10",
+      "entry_date": "2026-10-01",
+      "customer_name": "PRAKASH",
+      "ac_no": 6,
+      "amount": 2000,
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R10:INTEREST",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "interest-NISHANTH-2026.xlsx-R11",
+      "entry_date": "2026-10-01",
+      "customer_name": "SCM  SELVAM",
+      "ac_no": 46,
+      "amount": 100,
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R11:INTEREST",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    }
+  ],
+  "dues": [
+    {
+      "id": "due-NISHANTH-2026.xlsx-R3",
+      "due_date": "2026-10-06",
+      "borrower_name": "AJITH-1",
+      "amount": 3000,
+      "settled_amount": 0,
+      "remaining_amount": 3000,
+      "status": "unpaid",
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R3:DUE",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "due-NISHANTH-2026.xlsx-R4",
+      "due_date": "2026-10-11",
+      "borrower_name": "SHANTHI-1",
+      "amount": 1000,
+      "settled_amount": 0,
+      "remaining_amount": 1000,
+      "status": "unpaid",
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R4:DUE",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "due-NISHANTH-2026.xlsx-R5",
+      "due_date": "2026-10-11",
+      "borrower_name": "DIVYA",
+      "amount": 1000,
+      "settled_amount": 0,
+      "remaining_amount": 1000,
+      "status": "unpaid",
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R5:DUE",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "due-NISHANTH-2026.xlsx-R6",
+      "due_date": "2026-10-13",
+      "borrower_name": "AJITH-2",
+      "amount": 3000,
+      "settled_amount": 0,
+      "remaining_amount": 3000,
+      "status": "unpaid",
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R6:DUE",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "due-NISHANTH-2026.xlsx-R7",
+      "due_date": "2026-10-20",
+      "borrower_name": "AJITH-3",
+      "amount": 3000,
+      "settled_amount": 0,
+      "remaining_amount": 3000,
+      "status": "unpaid",
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R7:DUE",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    },
+    {
+      "id": "due-NISHANTH-2026.xlsx-R8",
+      "due_date": "2026-10-19",
+      "borrower_name": "SHANTHI-2",
+      "amount": 1000,
+      "settled_amount": 0,
+      "remaining_amount": 1000,
+      "status": "unpaid",
+      "source_reference": "NISHANTH-2026.xlsx:SEP&OCT:R8:DUE",
+      "notes": null,
+      "created_at": "2026-10-23T07:36:15.086Z"
+    }
+  ],
+  "tenPercentEntries": [
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R3:PROFIT",
+      "mainSheetNo": 3,
+      "date": "2026-09-22",
+      "particulars": "GANESHAMURTHI",
+      "amount": 50
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R4:PROFIT",
+      "mainSheetNo": 4,
+      "date": "2026-09-22",
+      "particulars": "NARAYANAKUMAR",
+      "amount": 600
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R5:PROFIT",
+      "mainSheetNo": 5,
+      "date": "2026-09-22",
+      "particulars": "GOVIND",
+      "amount": 730
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R6:PROFIT",
+      "mainSheetNo": 6,
+      "date": "2026-09-23",
+      "particulars": "ARUN",
+      "amount": 230
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R7:PROFIT",
+      "mainSheetNo": 7,
+      "date": "2026-09-23",
+      "particulars": "UMA",
+      "amount": 580
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R8:PROFIT",
+      "mainSheetNo": 10,
+      "date": "2026-09-24",
+      "particulars": "MT",
+      "amount": 140
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R9:PROFIT",
+      "mainSheetNo": 11,
+      "date": "2026-09-26",
+      "particulars": "DIVYA",
+      "amount": 100
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R10:PROFIT",
+      "mainSheetNo": 12,
+      "date": "2026-09-28",
+      "particulars": "BALACHANDAR",
+      "amount": 700
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R11:PROFIT",
+      "mainSheetNo": 13,
+      "date": "2026-09-30",
+      "particulars": "KALYANAM",
+      "amount": 550
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R12:PROFIT",
+      "mainSheetNo": 15,
+      "date": "2026-10-01",
+      "particulars": "MUBARAK",
+      "amount": 600
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R13:PROFIT",
+      "mainSheetNo": 16,
+      "date": "2026-10-01",
+      "particulars": "GOVIND",
+      "amount": 400
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R14:PROFIT",
+      "mainSheetNo": 22,
+      "date": "2026-10-04",
+      "particulars": "MURUGESH",
+      "amount": 330
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R15:PROFIT",
+      "mainSheetNo": 25,
+      "date": "2026-10-05",
+      "particulars": "VIGNESH",
+      "amount": 40
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R16:PROFIT",
+      "mainSheetNo": 26,
+      "date": "2026-10-05",
+      "particulars": "THANGARAJ",
+      "amount": 100
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R17:PROFIT",
+      "mainSheetNo": 27,
+      "date": "2026-10-05",
+      "particulars": "DHINESH UPSTER",
+      "amount": 1000
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R18:PROFIT",
+      "mainSheetNo": 29,
+      "date": "2026-10-06",
+      "particulars": "PRAKASH-AUTO MURI",
+      "amount": 500
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R19:PROFIT",
+      "mainSheetNo": 30,
+      "date": "2026-10-06",
+      "particulars": "RAJA-RENT",
+      "amount": 150
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R20:PROFIT",
+      "mainSheetNo": 32,
+      "date": "2026-10-08",
+      "particulars": "KEERTHI-PWRHOUSE",
+      "amount": 200
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R21:PROFIT",
+      "mainSheetNo": 33,
+      "date": "2026-10-11",
+      "particulars": "RAJA-SARAN",
+      "amount": 40
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R22:PROFIT",
+      "mainSheetNo": 35,
+      "date": "2026-10-11",
+      "particulars": "GOPALAN",
+      "amount": 320
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R23:PROFIT",
+      "mainSheetNo": 38,
+      "date": "2026-10-11",
+      "particulars": "PATHIRAM A/C",
+      "amount": 700
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R24:PROFIT",
+      "mainSheetNo": 39,
+      "date": "2026-10-12",
+      "particulars": "RAJESWARI",
+      "amount": 60
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R25:PROFIT",
+      "mainSheetNo": 43,
+      "date": "2026-10-17",
+      "particulars": "WESSELS",
+      "amount": 250
+    },
+    {
+      "sourceKey": "NISHANTH-2026.xlsx:SEP&OCT:R26:PROFIT",
+      "mainSheetNo": 47,
+      "date": "2026-10-20",
+      "particulars": "NARAYANAKUMAR",
+      "amount": 600
+    }
+  ]
 }
