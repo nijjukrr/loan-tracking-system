@@ -136,7 +136,6 @@ export function WeeklyPage({ onOpenNewLoan }: Props) {
                   <th style={{ textAlign: 'right' }}>Weekly Installment</th>
                   <th>Next Due</th>
                   <th style={{ textAlign: 'center' }}>Progress</th>
-                  <th style={{ textAlign: 'right' }}>Balance</th>
                   <th>Status</th>
                   <th style={{ textAlign: 'center' }}>Actions</th>
                 </tr>
@@ -166,9 +165,6 @@ export function WeeklyPage({ onOpenNewLoan }: Props) {
                       </td>
                       <td style={{ textAlign: 'center' }}>
                         <span className="pill pill-gray">{weeksPaid} / 10 wks</span>
-                      </td>
-                      <td style={{ textAlign: 'right', fontWeight: 700 }} className={loan.remaining_balance > 0 ? 'text-danger' : 'text-positive'}>
-                        {currency.format(loan.remaining_balance)}
                       </td>
                       <td>
                         <span className={`pill ${loan.status === 'active' ? 'pill-green' : 'pill-gray'}`}>

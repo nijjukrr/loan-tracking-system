@@ -44,7 +44,6 @@ export function TotalIncomePage() {
   const profitTotal = profits.reduce((sum, p) => sum + Number(p.amount || 0), 0)
   const interestTotal = interests.reduce((sum, i) => sum + Number(i.amount || 0), 0)
   const customTotalIncome = dueTotal + profitTotal + interestTotal
-  const realizedCashIncome = profitTotal + interestTotal
 
   const allItems = useMemo(() => {
     const list: Array<{
@@ -128,33 +127,6 @@ export function TotalIncomePage() {
           </button>
         </div>
       </header>
-
-      {/* Accounting Safeguard Banner */}
-      <div
-        className="card"
-        style={{
-          marginBottom: '1.5rem',
-          background: '#f8fafc',
-          borderLeft: '4px solid #0284c7',
-          padding: '1rem 1.25rem',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-          <span style={{ fontSize: '1.25rem' }}>ℹ️</span>
-          <div>
-            <strong style={{ fontSize: '0.9375rem', color: '#0f172a' }}>
-              Accounting Classification Notice
-            </strong>
-            <p style={{ margin: '0.25rem 0 0', fontSize: '0.8125rem', color: '#475569', lineHeight: 1.5 }}>
-              This custom formula (<strong>Due + Profit + Interest</strong>) reflects the original spreadsheet's
-              management tracking aggregate of <strong>{currency.format(customTotalIncome)}</strong>. Note that{' '}
-              <strong>Outstanding Dues ({currency.format(dueTotal)})</strong> represent uncollected customer
-              receivables, not realized cash in hand. Realized received cash (Interest + Profit) is{' '}
-              <strong>{currency.format(realizedCashIncome)}</strong>.
-            </p>
-          </div>
-        </div>
-      </div>
 
       {error && (
         <div className="card" style={{ marginBottom: '1.5rem', background: '#fef2f2', borderLeft: '4px solid #ef4444' }}>

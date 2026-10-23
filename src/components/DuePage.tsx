@@ -46,9 +46,16 @@ export function DuePage() {
     loadData()
   }, [])
 
+  const getRemainingDue = (item: DueReceivableEntry) => {
+    if (item.remaining_amount != null && !isNaN(Number(item.remaining_amount))) {
+      return Number(item.remaining_amount)
+    }
+    return Math.max(0, Number(item.amount || 0) - Number(item.settled_amount || 0))
+  }
+
   const totalOriginalAmount = dues.reduce((sum, d) => sum + Number(d.amount || 0), 0)
   const totalSettledAmount = dues.reduce((sum, d) => sum + Number(d.settled_amount || 0), 0)
-  const totalOutstandingDue = dues.reduce((sum, d) => sum + Number(d.remaining_amount ?? d.amount ?? 0), 0)
+  const totalOutstandingDue = dues.reduce((sum, d) => sum + getRemainingDue(d), 0)
   const isReferenceReconciled = totalOutstandingDue === WORKBOOK_REFERENCE_TARGETS.outstandingDues
 
   const handleAddSubmit = async (e: React.FormEvent) => {
@@ -97,8 +104,9 @@ export function DuePage() {
   }
 
   const handleOpenSettle = (due: DueReceivableEntry) => {
-    setSelectedDue(due)
-    setSettleAmount(due.remaining_amount)
+    const rem = getRemainingDue(due)
+    setSelectedDue({ ...due, remaining_amount: rem })
+    setSettleAmount(rem)
   }
 
   const handleSettleSubmit = async (e: React.FormEvent) => {
@@ -244,64 +252,65 @@ export function DuePage() {
                   <th style={{ textAlign: 'right' }}>Settled</th>
                   <th style={{ textAlign: 'right' }}>Remaining Due</th>
                   <th>Status</th>
-                  <th>Source Reference</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredDues.map((item, idx) => (
-                  <tr key={item.id}>
-                    <td style={{ color: 'var(--muted)', fontSize: '0.8125rem' }}>{idx + 1}</td>
-                    <td>{item.due_date || '—'}</td>
-                    <td>
-                      <strong>{item.borrower_name}</strong>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>{currency.format(item.amount)}</td>
-                    <td style={{ textAlign: 'right', color: '#047857' }}>{currency.format(item.settled_amount || 0)}</td>
-                    <td style={{ textAlign: 'right', fontWeight: 700, color: item.remaining_amount > 0 ? '#dc2626' : '#047857' }}>
-                      {currency.format(item.remaining_amount)}
-                    </td>
-                    <td>
-                      <span
-                        style={{
-                          fontSize: '0.6875rem',
-                          fontWeight: 700,
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          background: item.remaining_amount === 0 ? '#ecfdf5' : '#fef2f2',
-                          color: item.remaining_amount === 0 ? '#047857' : '#dc2626',
-                        }}
-                      >
-                        {item.remaining_amount === 0 ? 'SETTLED' : item.settled_amount > 0 ? 'PARTIAL' : 'UNPAID'}
-                      </span>
-                    </td>
-                    <td style={{ color: 'var(--muted)', fontSize: '0.75rem' }}>
-                      {item.source_reference || item.notes || 'Manual Entry'}
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', gap: '0.375rem' }}>
-                        {item.remaining_amount > 0 && (
+                {filteredDues.map((item, idx) => {
+                  const rem = getRemainingDue(item)
+                  const isSettled = rem === 0
+                  const isPartial = !isSettled && (item.settled_amount || 0) > 0
+                  return (
+                    <tr key={item.id}>
+                      <td style={{ color: 'var(--muted)', fontSize: '0.8125rem' }}>{idx + 1}</td>
+                      <td>{item.due_date || '—'}</td>
+                      <td>
+                        <strong>{item.borrower_name}</strong>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>{currency.format(item.amount)}</td>
+                      <td style={{ textAlign: 'right', color: '#047857' }}>{currency.format(item.settled_amount || 0)}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 700, color: rem > 0 ? '#dc2626' : '#047857' }}>
+                        {currency.format(rem)}
+                      </td>
+                      <td>
+                        <span
+                          style={{
+                            fontSize: '0.6875rem',
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            background: isSettled ? '#ecfdf5' : '#fef2f2',
+                            color: isSettled ? '#047857' : '#dc2626',
+                          }}
+                        >
+                          {isSettled ? 'SETTLED' : isPartial ? 'PARTIAL' : 'UNPAID'}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'inline-flex', gap: '0.375rem' }}>
+                          {rem > 0 && (
+                            <button
+                              type="button"
+                              className="primary-button compact-button"
+                              onClick={() => handleOpenSettle(item)}
+                              title="Record payment towards this due"
+                            >
+                              Settle
+                            </button>
+                          )}
                           <button
                             type="button"
-                            className="primary-button compact-button"
-                            onClick={() => handleOpenSettle(item)}
-                            title="Record payment towards this due"
+                            className="secondary-button compact-button"
+                            style={{ color: '#ef4444' }}
+                            onClick={() => handleDelete(item.id, item.borrower_name, item.amount)}
                           >
-                            Settle
+                            Delete
                           </button>
-                        )}
-                        <button
-                          type="button"
-                          className="secondary-button compact-button"
-                          style={{ color: '#ef4444' }}
-                          onClick={() => handleDelete(item.id, item.borrower_name, item.amount)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
               <tfoot>
                 <tr style={{ background: '#f8fafc', fontWeight: 700 }}>
@@ -309,15 +318,15 @@ export function DuePage() {
                     Total:
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    {currency.format(filteredDues.reduce((sum, item) => sum + item.amount, 0))}
+                    {currency.format(filteredDues.reduce((sum, item) => sum + Number(item.amount || 0), 0))}
                   </td>
                   <td style={{ textAlign: 'right', color: '#047857' }}>
-                    {currency.format(filteredDues.reduce((sum, item) => sum + (item.settled_amount || 0), 0))}
+                    {currency.format(filteredDues.reduce((sum, item) => sum + Number(item.settled_amount || 0), 0))}
                   </td>
                   <td style={{ textAlign: 'right', color: '#dc2626', fontSize: '1rem' }}>
-                    {currency.format(filteredDues.reduce((sum, item) => sum + item.remaining_amount, 0))}
+                    {currency.format(filteredDues.reduce((sum, item) => sum + getRemainingDue(item), 0))}
                   </td>
-                  <td colSpan={3} />
+                  <td colSpan={2} />
                 </tr>
               </tfoot>
             </table>

@@ -196,7 +196,6 @@ export function TenPercentPage() {
                 <tr>
                   <th>Date</th>
                   <th>Particulars / Borrower</th>
-                  <th>Source Classification</th>
                   <th style={{ textAlign: 'right' }}>Amount (₹)</th>
                   <th>Notes</th>
                   <th style={{ textAlign: 'center' }}>Action</th>
@@ -207,15 +206,6 @@ export function TenPercentPage() {
                   <tr key={entry.id}>
                     <td>{friendlyDate(entry.entry_date)}</td>
                     <td style={{ fontWeight: 600 }}>{entry.particulars}</td>
-                    <td>
-                      <span className="source-badge">
-                        {entry.source_kind === 'imported'
-                          ? 'Workbook Ledger'
-                          : entry.source_kind === 'main_tag'
-                          ? 'Explicit MAIN Tag'
-                          : 'Manual Entry'}
-                      </span>
-                    </td>
                     <td className="amount-cell primary-cell" style={{ textAlign: 'right' }}>
                       {currency.format(entry.amount)}
                     </td>
