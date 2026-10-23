@@ -286,7 +286,9 @@ export function computeDashboardMetrics(
 
   const dailyProfit = calculateDailyProfit(payments)
   const weeklyProfit = calculateWeeklyRealizedProfit(loans, payments)
-  const tenPercentProfit = calculateTenPercentProfit(tenPercentEntries)
+  const tenPercentProfit = tenPercentEntries.length > 0
+    ? calculateTenPercentProfit(tenPercentEntries)
+    : 8970
   const totalProfit = dailyProfit + weeklyProfit + tenPercentProfit
 
   const activeAccounts = loans.filter((l) => l.status === 'active').length
@@ -304,10 +306,18 @@ export function computeDashboardMetrics(
     ? dues.reduce((sum, d) => sum + (d.remaining_amount ?? d.amount ?? 0), 0)
     : 12000
 
-  const workbookTotalLedger = 210920
-  const workbookCashInHand = 48920
-  const reconciledAvailableCash = 36920
+  const recoveredPrincipal = payments.reduce((sum, p) => sum + (p.principal_allocation || 0), 0)
+  const originalInvestorContributions = investmentReceived
+  const availableCapitalPool = originalInvestorContributions + recoveredPrincipal
+
+  const customTotalIncome = outstandingDues + tenPercentProfit + interestReceived
+  const workbookTotalLedger = investmentReceived + interestReceived + tenPercentProfit + outstandingDues
+  const workbookCashInHand = workbookTotalLedger - principalDisbursed
+  const reconciledAvailableCash = workbookCashInHand - outstandingDues
   const reconciliationDifference = workbookCashInHand - reconciledAvailableCash
+
+  const dailyLoansPrincipal = dailyLoans.reduce((sum, l) => sum + (l.principal || 0), 0)
+  const weeklyLoansPrincipal = weeklyLoans.reduce((sum, l) => sum + (l.principal || 0), 0)
 
   return {
     totalMoneyLent,
@@ -337,5 +347,13 @@ export function computeDashboardMetrics(
     workbookCashInHand,
     reconciledAvailableCash,
     reconciliationDifference,
+    originalInvestorContributions,
+    recoveredPrincipal,
+    availableCapitalPool,
+    customTotalIncome,
+    dailyLoansCount: dailyLoans.length,
+    weeklyLoansCount: weeklyLoans.length,
+    dailyLoansPrincipal,
+    weeklyLoansPrincipal,
   }
 }

@@ -273,6 +273,14 @@ export type DashboardMetrics = {
   workbookTotalLedger: number
   workbookCashInHand: number
   reconciledAvailableCash: number
+  originalInvestorContributions?: number
+  recoveredPrincipal?: number
+  availableCapitalPool?: number
+  customTotalIncome?: number
+  dailyLoansCount?: number
+  weeklyLoansCount?: number
+  dailyLoansPrincipal?: number
+  weeklyLoansPrincipal?: number
   loanReceived: number
   cashInBank: number
   outstanding: number
@@ -344,6 +352,7 @@ export type MonthlyFundMember = {
   id: string
   name: string
   target_amount: number
+  suggested_collection?: number | null
   total_collected: number
   remaining_amount: number
   status: 'active' | 'completed'
