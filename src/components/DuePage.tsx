@@ -248,18 +248,13 @@ export function DuePage() {
                   <th>#</th>
                   <th>Due Date</th>
                   <th>Borrower / Customer</th>
-                  <th style={{ textAlign: 'right' }}>Original Amount</th>
-                  <th style={{ textAlign: 'right' }}>Settled</th>
-                  <th style={{ textAlign: 'right' }}>Remaining Due</th>
-                  <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Amount</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredDues.map((item, idx) => {
                   const rem = getRemainingDue(item)
-                  const isSettled = rem === 0
-                  const isPartial = !isSettled && (item.settled_amount || 0) > 0
                   return (
                     <tr key={item.id}>
                       <td style={{ color: 'var(--muted)', fontSize: '0.8125rem' }}>{idx + 1}</td>
@@ -267,24 +262,8 @@ export function DuePage() {
                       <td>
                         <strong>{item.borrower_name}</strong>
                       </td>
-                      <td style={{ textAlign: 'right' }}>{currency.format(item.amount)}</td>
-                      <td style={{ textAlign: 'right', color: '#047857' }}>{currency.format(item.settled_amount || 0)}</td>
                       <td style={{ textAlign: 'right', fontWeight: 700, color: rem > 0 ? '#dc2626' : '#047857' }}>
                         {currency.format(rem)}
-                      </td>
-                      <td>
-                        <span
-                          style={{
-                            fontSize: '0.6875rem',
-                            fontWeight: 700,
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            background: isSettled ? '#ecfdf5' : '#fef2f2',
-                            color: isSettled ? '#047857' : '#dc2626',
-                          }}
-                        >
-                          {isSettled ? 'SETTLED' : isPartial ? 'PARTIAL' : 'UNPAID'}
-                        </span>
                       </td>
                       <td style={{ textAlign: 'right' }}>
                         <div style={{ display: 'inline-flex', gap: '0.375rem' }}>
@@ -317,16 +296,10 @@ export function DuePage() {
                   <td colSpan={3} style={{ textAlign: 'right' }}>
                     Total:
                   </td>
-                  <td style={{ textAlign: 'right' }}>
-                    {currency.format(filteredDues.reduce((sum, item) => sum + Number(item.amount || 0), 0))}
-                  </td>
-                  <td style={{ textAlign: 'right', color: '#047857' }}>
-                    {currency.format(filteredDues.reduce((sum, item) => sum + Number(item.settled_amount || 0), 0))}
-                  </td>
                   <td style={{ textAlign: 'right', color: '#dc2626', fontSize: '1rem' }}>
                     {currency.format(filteredDues.reduce((sum, item) => sum + getRemainingDue(item), 0))}
                   </td>
-                  <td colSpan={2} />
+                  <td />
                 </tr>
               </tfoot>
             </table>

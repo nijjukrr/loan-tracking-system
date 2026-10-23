@@ -106,59 +106,6 @@ export function AppLayout({ onSignOut: _onSignOut, onOpenNewLoan: _onOpenNewLoan
           >
             <span>📆</span> Weekly Loans
           </NavLink>
-          <NavLink
-            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-            to="/active-accounts"
-            onClick={closeMenu}
-          >
-            <span>📂</span> Active Accounts
-          </NavLink>
-          <NavLink
-            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-            to="/closed-accounts"
-            onClick={closeMenu}
-          >
-            <span>📁</span> Closed Accounts
-          </NavLink>
-          <NavLink
-            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-            to="/borrowers"
-            onClick={closeMenu}
-          >
-            <span>👥</span> Borrowers
-          </NavLink>
-
-          <div className="nav-section-label" style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0.75rem 0 0.25rem 0.5rem' }}>
-            Collections & Funds
-          </div>
-          <NavLink
-            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-            to="/payments"
-            onClick={closeMenu}
-          >
-            <span>💳</span> Payments & Receipts
-          </NavLink>
-          <NavLink
-            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-            to="/reminders"
-            onClick={closeMenu}
-          >
-            <span>🔔</span> Reminders
-          </NavLink>
-          <NavLink
-            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-            to="/funds/monthly"
-            onClick={closeMenu}
-          >
-            <span>🤝</span> Monthly Fund
-          </NavLink>
-          <NavLink
-            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-            to="/funds/sweet"
-            onClick={closeMenu}
-          >
-            <span>🪔</span> Sweet Fund
-          </NavLink>
 
           <div className="nav-section-label" style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0.75rem 0 0.25rem 0.5rem' }}>
             Accounting & Audit

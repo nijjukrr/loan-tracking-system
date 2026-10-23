@@ -135,7 +135,6 @@ export function DailyPage({ onOpenNewLoan }: Props) {
                   <th style={{ textAlign: 'right' }}>Principal</th>
                   <th style={{ textAlign: 'right' }}>Interest (3%)</th>
                   <th>Next Due</th>
-                  <th>Status</th>
                   <th style={{ textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
@@ -159,11 +158,6 @@ export function DailyPage({ onOpenNewLoan }: Props) {
                       <td>
                         <span className={`pill ${isOverdue ? 'pill-red' : isDueToday ? 'pill-gold' : 'pill-green'}`}>
                           {nextDue}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`pill ${loan.status === 'active' ? 'pill-green' : 'pill-gray'}`}>
-                          {loan.status}
                         </span>
                       </td>
                       <td style={{ textAlign: 'center' }}>
