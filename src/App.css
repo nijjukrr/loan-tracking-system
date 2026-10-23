@@ -1169,3 +1169,163 @@ select:focus {
     border-bottom: 1px solid #ccc !important;
   }
 }
+
+/* ==========================================================================
+   Standardized UI Component System & Overflow Protection (Milestone 56)
+   ========================================================================== */
+
+.page-shell {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.page-title {
+  margin: 0 0 4px 0;
+  font-size: 1.625rem;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  word-break: break-word;
+}
+
+.page-subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+/* Standardized Card Container */
+.card {
+  background: var(--panel, #ffffff);
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--card-shadow, 0 10px 28px rgba(24, 32, 24, 0.08));
+  box-sizing: border-box;
+  width: 100%;
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+/* Standardized Pills / Status Badges */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pill-green {
+  background: var(--positive-bg, #eaf7ee);
+  color: var(--positive, #16803c);
+  border: 1px solid var(--positive-border, #a8ddb8);
+}
+
+.pill-gold,
+.pill-yellow {
+  background: var(--warning-bg, #fff8d8);
+  color: var(--warning, #df7b08);
+  border: 1px solid var(--warning-border, #f2d36b);
+}
+
+.pill-red {
+  background: var(--danger-bg, #fff0f0);
+  color: var(--danger, #c92a2a);
+  border: 1px solid var(--danger-border, #f3b1b1);
+}
+
+.pill-blue {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.pill-gray {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+/* Modal System */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.modal-card {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  padding: 1.5rem;
+  box-sizing: border-box;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Text Color Utilities */
+.text-positive { color: var(--positive, #16803c); }
+.text-danger { color: var(--danger, #c92a2a); }
+.text-warning { color: var(--warning, #df7b08); }
+.text-muted { color: var(--muted, #667085); }
+
+/* Responsive Grid and Viewport Enhancements (Milestone 57) */
+@media (max-width: 1024px) {
+  .kpi-grid {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)) !important;
+  }
+  .content {
+    padding: 24px 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .kpi-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .header-actions {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .header-actions button,
+  .header-actions a {
+    width: 100%;
+  }
+  .table-responsive {
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+    width: calc(100% + 1rem);
+  }
+}
+
+
