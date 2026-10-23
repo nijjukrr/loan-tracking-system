@@ -162,6 +162,83 @@ export type ImportBatchRecord = {
   status: 'preview' | 'committed' | 'rolled_back'
 }
 
+export type ImportedMainTransaction = {
+  sourceKey: string
+  mainSheetNo: number
+  date: string
+  particulars: string
+  mode: 'D' | 'W' | null
+  debit: number
+  credit: number
+  remarks: string | null
+  category: '10PCT' | null
+  cleared: boolean
+}
+
+export type ImportedLedgerSummary = {
+  cashInBank: number
+  loanReceived: number
+  outstanding: number
+  creditGrandTotal: number
+  investmentTotal: number
+  interestTotal: number
+  tenPercentTotal: number
+  duesTotal: number
+  loansPrincipalTotal: number
+  workbookTotalLedger: number
+  workbookCashInHand: number
+  reconciledAvailableCash: number
+}
+
+export type ImportedLoan = {
+  sourceKey: string
+  mainSheetNo: number
+  acNo?: number | null
+  customerName: string
+  mode: 'D' | 'W'
+  loanDate: string
+  principal: number
+  sourceCredit: number
+  sourceRemarks: string | null
+  cleared: boolean
+}
+
+export type ImportedFinanceData = {
+  source: { fileName: string; sha256: string; importedAt: string }
+  verification: {
+    mainRows: number
+    dailyCount: number
+    dailyPrincipal: number
+    dailyMainSheetNos: number[]
+    weeklyCount: number
+    weeklyPrincipal: number
+    weeklyMainSheetNos: number[]
+    tenPercentCount: number
+    tenPercentProfit: number
+    investmentCount: number
+    investmentTotal: number
+    interestCount: number
+    interestTotal: number
+    duesCount: number
+    duesTotal: number
+    totalLoansCount: number
+    totalPrincipal: number
+  }
+  ledgerSummary: ImportedLedgerSummary
+  mainTransactions: ImportedMainTransaction[]
+  loans: ImportedLoan[]
+  investments: InvestmentEntry[]
+  interests: InterestEntry[]
+  dues: DueReceivableEntry[]
+  tenPercentEntries: Array<{
+    sourceKey: string
+    mainSheetNo: number | null
+    date: string
+    particulars: string
+    amount: number
+  }>
+}
+
 export type MainTransaction = {
   id: string
   main_sheet_no: number
