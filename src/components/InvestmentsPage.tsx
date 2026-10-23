@@ -136,17 +136,6 @@ export function InvestmentsPage() {
         </div>
       </div>
 
-      {/* Accounting Notice */}
-      <div className="card" style={{ marginBottom: '1.5rem', background: '#f8fafc', borderLeft: '4px solid #3b82f6' }}>
-        <h3 style={{ margin: '0 0 0.375rem', fontSize: '0.9375rem', fontWeight: 700, color: '#1e40af' }}>
-          🛡️ Fundamental Accounting Distinction: Capital vs Profit
-        </h3>
-        <p style={{ margin: 0, fontSize: '0.8125rem', color: '#334155', lineHeight: '1.5' }}>
-          Investments represent capital contributed to finance lending operations (e.g. Ponniyan ₹27k, Rathika ₹50k, Gurusamy ₹30k).
-          They are credits into the business bank/cash, but they are <strong>NEVER revenue or 10% profit</strong>.
-          Treating investment credits as profit was the cause of the prior ₹161,010 error.
-        </p>
-      </div>
 
       {/* Search Bar */}
       <div className="card" style={{ marginBottom: '1.25rem', padding: '0.75rem 1rem' }}>
