@@ -60,9 +60,10 @@ export function BorrowerDetailPage() {
 
   async function handleCloseAccount() {
     if (!loan) return
-    if (!window.confirm(`Close the account for ${loan.customer_name}? Its history will remain available.`)) return
+    const reason = window.prompt(`Enter closure remarks for ${loan.customer_name} (e.g. Settled in full):`, 'Settled in full')
+    if (reason === null) return // cancelled
     try {
-      await financeApi.closeLoan(loan.id)
+      await financeApi.closeLoan(loan.id, reason)
       loadData()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to close account.')

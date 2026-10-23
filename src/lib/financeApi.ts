@@ -40,7 +40,7 @@ export interface FinanceApi {
   listLoans(filter?: { mode?: ModeKind; status?: 'active' | 'closed'; search?: string }): Promise<Loan[]>
   getLoanDetail(id: string): Promise<{ loan: Loan; installments: Installment[]; payments: Payment[] } | null>
   createLoan(input: NewLoanInput): Promise<Loan>
-  closeLoan(id: string): Promise<Loan>
+  closeLoan(id: string, reason?: string): Promise<Loan>
   deleteLoan(id: string): Promise<void>
 
   // Payments & Schedules
@@ -587,14 +587,21 @@ export class LocalPreviewFinanceApi implements FinanceApi {
     }
   }
 
-  async closeLoan(id: string): Promise<Loan> {
+  async closeLoan(id: string, reason?: string): Promise<Loan> {
     const store = getLocalStore()
     const index = store.loans.findIndex((l) => l.id === id)
     if (index === -1) throw new Error('Loan not found.')
+    const existingRemarks = store.loans[index].source_remarks
+    const newRemarks = reason
+      ? existingRemarks
+        ? `${existingRemarks} | ${reason.trim()}`
+        : reason.trim()
+      : existingRemarks
     const updated = {
       ...store.loans[index],
       status: 'closed' as const,
       closed_at: formatDateISO(new Date()),
+      source_remarks: newRemarks,
       updated_at: new Date().toISOString(),
     }
     const loans = [...store.loans]
@@ -1026,8 +1033,25 @@ export class SupabaseFinanceApi implements FinanceApi {
     return { ...result, installments: (installments || []) as Installment[] }
   }
 
-  async closeLoan(id: string): Promise<Loan> {
-    const { data, error } = await supabase!.from('loans').update({ status: 'closed', closed_at: new Date().toISOString() }).eq('id', id).select().single()
+  async closeLoan(id: string, reason?: string): Promise<Loan> {
+    const { data: current } = await supabase!.from('loans').select('source_remarks').eq('id', id).single()
+    const existingRemarks = current?.source_remarks
+    const newRemarks = reason
+      ? existingRemarks
+        ? `${existingRemarks} | ${reason.trim()}`
+        : reason.trim()
+      : existingRemarks
+    const { data, error } = await supabase!
+      .from('loans')
+      .update({
+        status: 'closed',
+        closed_at: new Date().toISOString(),
+        source_remarks: newRemarks,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single()
     if (error) throw error
     return data as Loan
   }
