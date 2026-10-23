@@ -17,6 +17,8 @@ import { InvestmentsPage } from './components/InvestmentsPage'
 import { InterestPage } from './components/InterestPage'
 import { ReportsPage } from './components/ReportsPage'
 import { AuditTrailPage } from './components/AuditTrailPage'
+import { MonthlyFundPage } from './components/MonthlyFundPage'
+import { SweetFundPage } from './components/SweetFundPage'
 import { NewLoanModal } from './components/NewLoanModal'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import './App.css'
@@ -80,6 +82,8 @@ function App() {
           <Route path="/interest" element={<InterestPage key={`int-${refreshKey}`} />} />
           <Route path="/reports" element={<ReportsPage key={`rep-${refreshKey}`} />} />
           <Route path="/audit" element={<AuditTrailPage key={`aud-${refreshKey}`} />} />
+          <Route path="/funds/monthly" element={<MonthlyFundPage key={`mf-${refreshKey}`} />} />
+          <Route path="/funds/sweet" element={<SweetFundPage key={`sf-${refreshKey}`} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
