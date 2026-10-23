@@ -5,17 +5,24 @@ import {
   formatDateISO,
   generateDailyInstallments,
   generateWeeklyInstallments,
-  getInstallmentStatus,
 } from './financeLogic'
 import { supabase } from './supabase'
 import type {
-  DashboardMetrics,
   Customer,
+  DashboardMetrics,
+  DueReceivableEntry,
+  FinancialLedgerTransaction,
+  ImportedFinanceData,
   Installment,
   InstallmentStatus,
+  InterestEntry,
+  InvestmentEntry,
   Loan,
   MainTransaction,
   ModeKind,
+  NewDueInput,
+  NewInterestInput,
+  NewInvestmentInput,
   NewLoanInput,
   NewPaymentInput,
   NewTenPercentEntry,
@@ -24,20 +31,52 @@ import type {
 } from '../types'
 
 export interface FinanceApi {
+  // People & Customer Profiles
   listPeople(search?: string): Promise<Customer[]>
+  createCustomer(input: { name: string; phone?: string; address?: string }): Promise<Customer>
+  getCustomerDetail(id: string): Promise<{ customer: Customer; loans: Loan[]; dues: DueReceivableEntry[] } | null>
+
+  // Loans Lifecycle
   listLoans(filter?: { mode?: ModeKind; status?: 'active' | 'closed'; search?: string }): Promise<Loan[]>
   getLoanDetail(id: string): Promise<{ loan: Loan; installments: Installment[]; payments: Payment[] } | null>
   createLoan(input: NewLoanInput): Promise<Loan>
-  recordPayment(input: NewPaymentInput): Promise<{ loan: Loan; payment: Payment; installments: Installment[] }>
   closeLoan(id: string): Promise<Loan>
   deleteLoan(id: string): Promise<void>
+
+  // Payments & Schedules
+  recordPayment(input: NewPaymentInput): Promise<{ loan: Loan; payment: Payment; installments: Installment[] }>
   listPayments(filter?: { mode?: ModeKind; search?: string }): Promise<Payment[]>
   listInstallments(filter?: { status?: InstallmentStatus; due_date?: string }): Promise<Array<Installment & { loan?: Loan }>>
-  getDashboardMetrics(): Promise<DashboardMetrics>
+
+  // 10% Profit Management
   listTenPercentEntries(): Promise<TenPercentEntry[]>
   addTenPercentEntry(entry: NewTenPercentEntry): Promise<TenPercentEntry>
+  deleteTenPercentEntry(id: string): Promise<void>
   listUntaggedMainTransactions(): Promise<MainTransaction[]>
   tagMainTransaction(transactionId: string): Promise<TenPercentEntry>
+
+  // Investment Management
+  listInvestments(): Promise<InvestmentEntry[]>
+  addInvestment(input: NewInvestmentInput): Promise<InvestmentEntry>
+  deleteInvestment(id: string): Promise<void>
+
+  // Interest Tracking
+  listInterests(): Promise<InterestEntry[]>
+  addInterest(input: NewInterestInput): Promise<InterestEntry>
+  deleteInterest(id: string): Promise<void>
+
+  // Dues & Receivables
+  listDues(): Promise<DueReceivableEntry[]>
+  addDue(input: NewDueInput): Promise<DueReceivableEntry>
+  settleDue(id: string, amount: number): Promise<DueReceivableEntry>
+  deleteDue(id: string): Promise<void>
+
+  // Unified Ledger
+  listLedgerTransactions(filter?: { category?: string }): Promise<FinancialLedgerTransaction[]>
+
+  // Dashboard & Administration
+  getDashboardMetrics(): Promise<DashboardMetrics>
+  importFullFinanceData(data: ImportedFinanceData): Promise<void>
   clearAllData(): Promise<void>
 }
 
@@ -46,6 +85,11 @@ const STORAGE_KEY_INSTALLMENTS = 'finance-tracker-installments-v5'
 const STORAGE_KEY_PAYMENTS = 'finance-tracker-payments-v5'
 const STORAGE_KEY_TEN_PERCENT = 'finance-tracker-ten-percent-v5'
 const STORAGE_KEY_MAIN_TX = 'finance-tracker-main-tx-v5'
+const STORAGE_KEY_INVESTMENTS = 'finance-tracker-investments-v5'
+const STORAGE_KEY_INTERESTS = 'finance-tracker-interests-v5'
+const STORAGE_KEY_DUES = 'finance-tracker-dues-v5'
+const STORAGE_KEY_CUSTOMERS = 'finance-tracker-customers-v5'
+const STORAGE_KEY_LEDGER = 'finance-tracker-ledger-v5'
 
 type RawImportLoan = {
   mainSheetNo: number
@@ -73,11 +117,9 @@ function buildInitialData() {
   const payments: Payment[] = []
 
   const localOnly = import.meta.env.VITE_LOCAL_ONLY === 'true'
-  const rawLoans: RawImportLoan[] = localOnly ? [] : ((importedData.loans as unknown as RawImportLoan[]) || [])
-  const todayStr = formatDateISO(new Date())
+  const rawLoans: RawImportLoan[] = localOnly ? [] : (((importedData as unknown as { loans?: RawImportLoan[] }).loans) || [])
 
   rawLoans.forEach((raw) => {
-
     const loanId = `loan-${raw.mainSheetNo}-${raw.sourceKey ? String(raw.sourceKey).replace(/[^a-zA-Z0-9-]/g, '-') : 'import'}`
     const isDaily = raw.mode === 'D'
     const principal = Number(raw.principal)
@@ -89,7 +131,7 @@ function buildInitialData() {
     let totalExpected = principal
 
     if (isDaily) {
-      interestAmount = Math.round((principal * 0.03)) // 3% per 10-day cycle standard
+      interestAmount = Math.round((principal * 0.03))
       totalExpected = principal + interestAmount * 6
     } else {
       weeklyPayment = 3000
@@ -121,7 +163,6 @@ function buildInitialData() {
     }
     loans.push(loan)
 
-    // Generate installments
     let loanInsts: Installment[] = []
     if (isDaily) {
       loanInsts = generateDailyInstallments(loanId, raw.loanDate, undefined, interestAmount)
@@ -129,74 +170,113 @@ function buildInitialData() {
       loanInsts = generateWeeklyInstallments(loanId, raw.loanDate, undefined, weeklyPayment)
     }
 
-    // Process initial payment if present in remarks or credit
     if (sourceCredit > 0) {
       const pId = `pay-init-${raw.mainSheetNo}`
-      const paymentDate = remarks.match(/\d{1,2}\/\d{1,2}\/\d{2,4}/)
-        ? raw.loanDate
-        : raw.loanDate
-
       const pType = isClosed ? 'Principal' : isDaily ? 'Interest' : 'Weekly Installment'
       payments.push({
         id: pId,
         loan_id: loanId,
-        installment_id: loanInsts[0]?.id,
         customer_name: raw.customerName,
         main_sheet_no: raw.mainSheetNo,
         mode: raw.mode as ModeKind,
-        payment_date: paymentDate,
+        payment_date: raw.loanDate,
         amount: sourceCredit,
         payment_type: pType,
-        note: remarks || 'Imported from Excel MAIN sheet',
-        created_at: new Date().toISOString(),
+        note: remarks || 'Imported credit/settlement',
+        created_at: new Date(raw.loanDate).toISOString(),
       })
 
-      if (loanInsts[0]) {
-        loanInsts[0].paid_date = paymentDate
-        loanInsts[0].paid_amount = sourceCredit
+      if (isClosed) {
+        loanInsts.forEach((inst) => {
+          inst.paid_amount = inst.expected_amount
+          inst.status = 'Paid'
+          inst.paid_date = raw.loanDate
+        })
+      } else {
+        let remainingCredit = sourceCredit
+        for (const inst of loanInsts) {
+          if (remainingCredit <= 0) break
+          const needed = inst.expected_amount - inst.paid_amount
+          const alloc = Math.min(remainingCredit, needed)
+          inst.paid_amount += alloc
+          remainingCredit -= alloc
+          if (inst.paid_amount >= inst.expected_amount) {
+            inst.status = 'Paid'
+            inst.paid_date = raw.loanDate
+          } else {
+            inst.status = 'Partial'
+          }
+        }
       }
     }
-
-    // Update statuses
-    loanInsts.forEach((inst) => {
-      inst.status = getInstallmentStatus(inst.due_date, inst.paid_date, inst.paid_amount, inst.expected_amount, todayStr)
-    })
 
     installments.push(...loanInsts)
   })
 
-  const rawMainTransactions: RawImportMainTransaction[] = localOnly ? [] : ((importedData.mainTransactions as unknown as RawImportMainTransaction[]) || [])
-  const mainTransactions: MainTransaction[] = rawMainTransactions.map((mt) => ({
-    id: `mt-${mt.mainSheetNo}`,
-    main_sheet_no: mt.mainSheetNo,
-    transaction_date: mt.date,
-    particulars: mt.particulars,
-    credit: mt.credit,
-    category: mt.category as '10PCT' | null,
+  const rawMain: RawImportMainTransaction[] = localOnly ? [] : (((importedData as unknown as { mainTransactions?: RawImportMainTransaction[] }).mainTransactions) || [])
+  const mainTransactions: MainTransaction[] = rawMain.map((raw, idx) => ({
+    id: `tx-init-${raw.mainSheetNo || idx}`,
+    main_sheet_no: raw.mainSheetNo || idx + 1,
+    transaction_date: raw.date || null,
+    particulars: raw.particulars,
+    credit: raw.credit,
+    category: (raw.category === '10PCT' ? '10PCT' : null),
   }))
 
-  const tenPercentEntries: TenPercentEntry[] = ((localOnly ? [] : (importedData.tenPercentEntries || [])) as Array<{ date: string; particulars: string; amount: number; mainSheetNo: number }>).map((tp, i) => ({
-    id: `tp-${i + 1}`,
-    entry_date: tp.date,
-    particulars: tp.particulars,
-    amount: tp.amount,
-    main_sheet_no: tp.mainSheetNo,
-    notes: null,
-    source_kind: 'main_tag',
+  const rawTen = localOnly ? [] : (((importedData as unknown as { tenPercentEntries?: Array<{ mainSheetNo?: number | null; date?: string; particulars?: string; amount?: number }> }).tenPercentEntries) || [])
+  const tenPercentEntries: TenPercentEntry[] = rawTen.map((raw, idx) => ({
+    id: `ten-init-${raw.mainSheetNo || idx}`,
+    entry_date: raw.date || formatDateISO(new Date()),
+    particulars: raw.particulars || 'Imported 10%',
+    amount: Number(raw.amount || 0),
+    main_sheet_no: raw.mainSheetNo || null,
+    notes: 'Imported from verified 10% profit ledger',
+    source_kind: 'imported',
     main_transaction_id: null,
     created_at: new Date().toISOString(),
   }))
 
+  return { loans, installments, payments, tenPercentEntries, mainTransactions }
+}
 
-  return { loans, installments, payments, mainTransactions, tenPercentEntries }
+const memoryStore = new Map<string, string>()
+
+function getStorageItem(key: string): string | null {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage.getItem(key)
+    }
+  } catch {
+    // Ignore in non-browser context
+  }
+  return memoryStore.get(key) ?? null
+}
+
+function setStorageItem(key: string, value: string): void {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(key, value)
+      return
+    }
+  } catch {
+    // Ignore in non-browser context
+  }
+  memoryStore.set(key, value)
 }
 
 function purgeLegacyStores() {
+  if (typeof window === 'undefined' || !window.localStorage) return
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    const legacyKeys = [
+      'finance-tracker-loans-v1',
+      'finance-tracker-loans-v2',
+      'finance-tracker-loans-v3',
+      'finance-tracker-loans-v4',
+    ]
+    for (const prefix of legacyKeys) {
       for (let i = window.localStorage.length - 1; i >= 0; i--) {
         const k = window.localStorage.key(i)
-        if (k && k.startsWith('finance-tracker-') && !k.endsWith('-v5')) {
+        if (k && k.startsWith(prefix)) {
           window.localStorage.removeItem(k)
         }
       }
@@ -210,25 +290,38 @@ function getLocalStore() {
   purgeLegacyStores()
   const initial = buildInitialData()
 
-  const storedLoans = localStorage.getItem(STORAGE_KEY_LOANS)
-  const storedInstallments = localStorage.getItem(STORAGE_KEY_INSTALLMENTS)
-  const storedPayments = localStorage.getItem(STORAGE_KEY_PAYMENTS)
-  const storedTenPercent = localStorage.getItem(STORAGE_KEY_TEN_PERCENT)
-  const storedMainTx = localStorage.getItem(STORAGE_KEY_MAIN_TX)
+  const safeParse = <T>(key: string, fallback: T): T => {
+    try {
+      const item = getStorageItem(key)
+      return item ? JSON.parse(item) : fallback
+    } catch {
+      return fallback
+    }
+  }
 
-  const loans: Loan[] = storedLoans ? JSON.parse(storedLoans) : initial.loans
-  const installments: Installment[] = storedInstallments ? JSON.parse(storedInstallments) : initial.installments
-  const payments: Payment[] = storedPayments ? JSON.parse(storedPayments) : initial.payments
-  const tenPercentEntries: TenPercentEntry[] = storedTenPercent ? JSON.parse(storedTenPercent) : initial.tenPercentEntries
-  const mainTransactions: MainTransaction[] = storedMainTx ? JSON.parse(storedMainTx) : initial.mainTransactions
+  const loans = safeParse<Loan[]>(STORAGE_KEY_LOANS, initial.loans)
+  const installments = safeParse<Installment[]>(STORAGE_KEY_INSTALLMENTS, initial.installments)
+  const payments = safeParse<Payment[]>(STORAGE_KEY_PAYMENTS, initial.payments)
+  const tenPercentEntries = safeParse<TenPercentEntry[]>(STORAGE_KEY_TEN_PERCENT, initial.tenPercentEntries)
+  const mainTransactions = safeParse<MainTransaction[]>(STORAGE_KEY_MAIN_TX, initial.mainTransactions)
+  const investments = safeParse<InvestmentEntry[]>(STORAGE_KEY_INVESTMENTS, [])
+  const interests = safeParse<InterestEntry[]>(STORAGE_KEY_INTERESTS, [])
+  const dues = safeParse<DueReceivableEntry[]>(STORAGE_KEY_DUES, [])
+  const customers = safeParse<Customer[]>(STORAGE_KEY_CUSTOMERS, [])
+  const ledgerTransactions = safeParse<FinancialLedgerTransaction[]>(STORAGE_KEY_LEDGER, [])
 
-  if (!storedLoans) localStorage.setItem(STORAGE_KEY_LOANS, JSON.stringify(loans))
-  if (!storedInstallments) localStorage.setItem(STORAGE_KEY_INSTALLMENTS, JSON.stringify(installments))
-  if (!storedPayments) localStorage.setItem(STORAGE_KEY_PAYMENTS, JSON.stringify(payments))
-  if (!storedTenPercent) localStorage.setItem(STORAGE_KEY_TEN_PERCENT, JSON.stringify(tenPercentEntries))
-  if (!storedMainTx) localStorage.setItem(STORAGE_KEY_MAIN_TX, JSON.stringify(mainTransactions))
-
-  return { loans, installments, payments, tenPercentEntries, mainTransactions }
+  return {
+    loans,
+    installments,
+    payments,
+    tenPercentEntries,
+    mainTransactions,
+    investments,
+    interests,
+    dues,
+    customers,
+    ledgerTransactions,
+  }
 }
 
 function saveLocalStore(data: {
@@ -237,18 +330,31 @@ function saveLocalStore(data: {
   payments?: Payment[]
   tenPercentEntries?: TenPercentEntry[]
   mainTransactions?: MainTransaction[]
+  investments?: InvestmentEntry[]
+  interests?: InterestEntry[]
+  dues?: DueReceivableEntry[]
+  customers?: Customer[]
+  ledgerTransactions?: FinancialLedgerTransaction[]
 }) {
-  if (data.loans) localStorage.setItem(STORAGE_KEY_LOANS, JSON.stringify(data.loans))
-  if (data.installments) localStorage.setItem(STORAGE_KEY_INSTALLMENTS, JSON.stringify(data.installments))
-  if (data.payments) localStorage.setItem(STORAGE_KEY_PAYMENTS, JSON.stringify(data.payments))
-  if (data.tenPercentEntries) localStorage.setItem(STORAGE_KEY_TEN_PERCENT, JSON.stringify(data.tenPercentEntries))
-  if (data.mainTransactions) localStorage.setItem(STORAGE_KEY_MAIN_TX, JSON.stringify(data.mainTransactions))
+  if (data.loans) setStorageItem(STORAGE_KEY_LOANS, JSON.stringify(data.loans))
+  if (data.installments) setStorageItem(STORAGE_KEY_INSTALLMENTS, JSON.stringify(data.installments))
+  if (data.payments) setStorageItem(STORAGE_KEY_PAYMENTS, JSON.stringify(data.payments))
+  if (data.tenPercentEntries) setStorageItem(STORAGE_KEY_TEN_PERCENT, JSON.stringify(data.tenPercentEntries))
+  if (data.mainTransactions) setStorageItem(STORAGE_KEY_MAIN_TX, JSON.stringify(data.mainTransactions))
+  if (data.investments) setStorageItem(STORAGE_KEY_INVESTMENTS, JSON.stringify(data.investments))
+  if (data.interests) setStorageItem(STORAGE_KEY_INTERESTS, JSON.stringify(data.interests))
+  if (data.dues) setStorageItem(STORAGE_KEY_DUES, JSON.stringify(data.dues))
+  if (data.customers) setStorageItem(STORAGE_KEY_CUSTOMERS, JSON.stringify(data.customers))
+  if (data.ledgerTransactions) setStorageItem(STORAGE_KEY_LEDGER, JSON.stringify(data.ledgerTransactions))
 }
 
-class LocalPreviewFinanceApi implements FinanceApi {
-  async listPeople(search = '') {
-    const { loans } = getLocalStore()
+export class LocalPreviewFinanceApi implements FinanceApi {
+  async listPeople(search = ''): Promise<Customer[]> {
+    const { loans, customers } = getLocalStore()
     const seen = new Map<string, Customer>()
+    for (const c of customers) {
+      seen.set(c.id, c)
+    }
     for (const loan of loans) {
       const id = loan.customer_id || `local-${loan.customer_name.toLowerCase()}`
       if (!seen.has(id)) seen.set(id, { id, name: loan.customer_name })
@@ -257,7 +363,37 @@ class LocalPreviewFinanceApi implements FinanceApi {
     return [...seen.values()].filter((person) => !query || person.name.toLowerCase().includes(query))
   }
 
-  async listLoans(filter?: { mode?: ModeKind; status?: 'active' | 'closed'; search?: string }) {
+  async createCustomer(input: { name: string; phone?: string; address?: string }): Promise<Customer> {
+    const store = getLocalStore()
+    const customer: Customer = {
+      id: crypto.randomUUID(),
+      name: input.name.trim(),
+      phone: input.phone?.trim() || null,
+      address: input.address?.trim() || null,
+      created_at: new Date().toISOString(),
+    }
+    const updated = [customer, ...store.customers]
+    saveLocalStore({ customers: updated })
+    return customer
+  }
+
+  async getCustomerDetail(id: string): Promise<{ customer: Customer; loans: Loan[]; dues: DueReceivableEntry[] } | null> {
+    const { customers, loans, dues } = getLocalStore()
+    let customer = customers.find((c) => c.id === id)
+    if (!customer) {
+      const matchedLoan = loans.find((l) => l.customer_id === id || l.customer_name.toLowerCase() === id.toLowerCase())
+      if (matchedLoan) {
+        customer = { id: matchedLoan.customer_id || id, name: matchedLoan.customer_name }
+      }
+    }
+    if (!customer) return null
+
+    const custLoans = loans.filter((l) => l.customer_id === customer.id || l.customer_name.toLowerCase() === customer.name.toLowerCase())
+    const custDues = dues.filter((d) => d.borrower_name.toLowerCase() === customer.name.toLowerCase())
+    return { customer, loans: custLoans, dues: custDues }
+  }
+
+  async listLoans(filter?: { mode?: ModeKind; status?: 'active' | 'closed'; search?: string }): Promise<Loan[]> {
     const { loans } = getLocalStore()
     return loans.filter((l) => {
       if (filter?.mode && l.mode !== filter.mode) return false
@@ -272,7 +408,7 @@ class LocalPreviewFinanceApi implements FinanceApi {
     })
   }
 
-  async getLoanDetail(id: string) {
+  async getLoanDetail(id: string): Promise<{ loan: Loan; installments: Installment[]; payments: Payment[] } | null> {
     const { loans, installments, payments } = getLocalStore()
     const loan = loans.find((l) => l.id === id || String(l.main_sheet_no) === id)
     if (!loan) return null
@@ -285,7 +421,7 @@ class LocalPreviewFinanceApi implements FinanceApi {
     return { loan, installments: loanInsts, payments: loanPayments }
   }
 
-  async createLoan(input: NewLoanInput) {
+  async createLoan(input: NewLoanInput): Promise<Loan> {
     const store = getLocalStore()
     const maxSheetNo = store.loans.reduce((max, l) => Math.max(max, l.main_sheet_no), 0)
     const mainSheetNo = input.main_sheet_no || maxSheetNo + 1
@@ -327,7 +463,7 @@ class LocalPreviewFinanceApi implements FinanceApi {
     return newLoan
   }
 
-  async recordPayment(input: NewPaymentInput) {
+  async recordPayment(input: NewPaymentInput): Promise<{ loan: Loan; payment: Payment; installments: Installment[] }> {
     const store = getLocalStore()
     const loanIndex = store.loans.findIndex((l) => l.id === input.loan_id)
     if (loanIndex === -1) throw new Error('Loan not found.')
@@ -337,7 +473,6 @@ class LocalPreviewFinanceApi implements FinanceApi {
       .filter((i) => i.loan_id === loan.id)
       .sort((a, b) => a.installment_number - b.installment_number)
 
-    // Principal repayment closes a Daily account without consuming an interest installment.
     const isPrincipalReturn = loan.mode === 'D' && (input.payment_type === 'Principal' || input.payment_type === 'Interest + Principal')
     const targetInst = isPrincipalReturn ? undefined : input.installment_id
       ? loanInsts.find((i) => i.id === input.installment_id)
@@ -359,150 +494,328 @@ class LocalPreviewFinanceApi implements FinanceApi {
       created_at: new Date().toISOString(),
     }
 
-    // Update target installment
-    if (targetInst) {
-      targetInst.paid_date = effectivePaidDate
-      targetInst.paid_amount += paymentAmount
-      targetInst.status = getInstallmentStatus(targetInst.due_date, targetInst.paid_date, targetInst.paid_amount, targetInst.expected_amount)
-      targetInst.updated_at = new Date().toISOString()
+    let updatedInsts = [...store.installments]
+    let updatedLoan = { ...loan }
+
+    if (isPrincipalReturn) {
+      updatedLoan.total_collected += paymentAmount
+      updatedLoan.remaining_balance = Math.max(0, updatedLoan.remaining_balance - paymentAmount)
+      updatedLoan.status = 'closed'
+      updatedLoan.closed_at = effectivePaidDate
+    } else if (targetInst) {
+      const instIndex = updatedInsts.findIndex((i) => i.id === targetInst.id)
+      if (instIndex !== -1) {
+        const inst = { ...updatedInsts[instIndex] }
+        inst.paid_amount += paymentAmount
+        inst.paid_date = effectivePaidDate
+        inst.status = inst.paid_amount >= inst.expected_amount ? 'Paid' : 'Partial'
+        updatedInsts[instIndex] = inst
+
+        // Update subsequent due date if Daily
+        if (loan.mode === 'D' && inst.status === 'Paid') {
+          const nextInst = updatedInsts.find(
+            (i) => i.loan_id === loan.id && i.installment_number === inst.installment_number + 1
+          )
+          if (nextInst && nextInst.status === 'Upcoming') {
+            nextInst.due_date = calculateNextDueDate('D', effectivePaidDate)
+          }
+        }
+      }
+      updatedLoan.total_collected += paymentAmount
+      updatedLoan.remaining_balance = Math.max(0, updatedLoan.remaining_balance - paymentAmount)
+      const allPaid = updatedInsts
+        .filter((i) => i.loan_id === loan.id)
+        .every((i) => i.status === 'Paid')
+      if (allPaid && loan.mode === 'W') {
+        updatedLoan.status = 'closed'
+        updatedLoan.closed_at = effectivePaidDate
+      }
     }
 
-    // Recalculate next due date for subsequent unpaid installments based on actual paid date
-    const nextDueDate = calculateNextDueDate(loan.mode, effectivePaidDate)
-    let nextInstIndex = loanInsts.findIndex((i) => i.id === targetInst?.id) + 1
-    if (nextInstIndex > 0 && nextInstIndex < loanInsts.length) {
-      loanInsts[nextInstIndex].due_date = nextDueDate
-      loanInsts[nextInstIndex].status = getInstallmentStatus(
-        nextDueDate,
-        loanInsts[nextInstIndex].paid_date,
-        loanInsts[nextInstIndex].paid_amount,
-        loanInsts[nextInstIndex].expected_amount
-      )
-    }
-
-    // Update loan totals
-    loan.total_collected += paymentAmount
-    loan.remaining_balance = Math.max(0, loan.total_expected - loan.total_collected)
-    if (loan.remaining_balance === 0 || isPrincipalReturn) {
-      loan.status = 'closed'
-      loan.closed_at = new Date().toISOString()
-    }
-    loan.updated_at = new Date().toISOString()
-
-    store.loans[loanIndex] = loan
+    const updatedLoans = [...store.loans]
+    updatedLoans[loanIndex] = updatedLoan
     const updatedPayments = [newPayment, ...store.payments]
 
-    saveLocalStore({ loans: store.loans, installments: store.installments, payments: updatedPayments })
-    return { loan, payment: newPayment, installments: loanInsts }
+    saveLocalStore({ loans: updatedLoans, installments: updatedInsts, payments: updatedPayments })
+    return {
+      loan: updatedLoan,
+      payment: newPayment,
+      installments: updatedInsts.filter((i) => i.loan_id === loan.id),
+    }
   }
 
-  async closeLoan(id: string) {
+  async closeLoan(id: string): Promise<Loan> {
     const store = getLocalStore()
-    const loan = store.loans.find((l) => l.id === id)
-    if (!loan) throw new Error('Loan not found.')
-    loan.status = 'closed'
-    loan.closed_at = new Date().toISOString()
-    loan.updated_at = new Date().toISOString()
-    saveLocalStore({ loans: store.loans })
-    return loan
+    const index = store.loans.findIndex((l) => l.id === id)
+    if (index === -1) throw new Error('Loan not found.')
+    const updated = {
+      ...store.loans[index],
+      status: 'closed' as const,
+      closed_at: formatDateISO(new Date()),
+      updated_at: new Date().toISOString(),
+    }
+    const loans = [...store.loans]
+    loans[index] = updated
+    saveLocalStore({ loans })
+    return updated
   }
 
-  async deleteLoan(id: string) {
+  async deleteLoan(id: string): Promise<void> {
     const store = getLocalStore()
-    if (!store.loans.some((loan) => loan.id === id)) throw new Error('Account not found.')
-    saveLocalStore({
-      loans: store.loans.filter((loan) => loan.id !== id),
-      installments: store.installments.filter((installment) => installment.loan_id !== id),
-      payments: store.payments.filter((payment) => payment.loan_id !== id),
-    })
+    const loans = store.loans.filter((l) => l.id !== id)
+    const installments = store.installments.filter((i) => i.loan_id !== id)
+    const payments = store.payments.filter((p) => p.loan_id !== id)
+    saveLocalStore({ loans, installments, payments })
   }
 
-  async listPayments(filter?: { mode?: ModeKind; search?: string }) {
+  async listPayments(filter?: { mode?: ModeKind; search?: string }): Promise<Payment[]> {
     const { payments } = getLocalStore()
     return payments.filter((p) => {
       if (filter?.mode && p.mode !== filter.mode) return false
       if (filter?.search) {
-        const q = filter.search.toLowerCase()
-        const matchesName = p.customer_name.toLowerCase().includes(q)
-        const matchesNo = String(p.main_sheet_no).includes(q)
+        const query = filter.search.toLowerCase()
+        const matchesName = p.customer_name.toLowerCase().includes(query)
+        const matchesNo = String(p.main_sheet_no).includes(query)
         if (!matchesName && !matchesNo) return false
       }
       return true
     })
   }
 
-  async listInstallments(filter?: { status?: InstallmentStatus; due_date?: string }) {
+  async listInstallments(filter?: { status?: InstallmentStatus; due_date?: string }): Promise<Array<Installment & { loan?: Loan }>> {
     const { installments, loans } = getLocalStore()
-    const todayStr = formatDateISO(new Date())
-
-    const loansMap = new Map(loans.map((l) => [l.id, l]))
-    const result: Array<Installment & { loan?: Loan }> = []
-
-    installments.forEach((inst) => {
-      const loan = loansMap.get(inst.loan_id)
-      if (!loan || loan.status === 'closed') return
-
-      const currentStatus = getInstallmentStatus(inst.due_date, inst.paid_date, inst.paid_amount, inst.expected_amount, todayStr)
-      const instItem = { ...inst, status: currentStatus, loan }
-
-      if (filter?.status && currentStatus !== filter.status) return
-      if (filter?.due_date && inst.due_date !== filter.due_date) return
-
-      result.push(instItem)
-    })
-
-    return result
+    const loanMap = new Map(loans.map((l) => [l.id, l]))
+    return installments
+      .filter((inst) => {
+        if (filter?.status && inst.status !== filter.status) return false
+        if (filter?.due_date && inst.due_date !== filter.due_date) return false
+        return true
+      })
+      .map((inst) => ({ ...inst, loan: loanMap.get(inst.loan_id) }))
   }
 
-  async getDashboardMetrics() {
-    const { loans, installments, payments, tenPercentEntries } = getLocalStore()
-    return computeDashboardMetrics(loans, installments, payments, tenPercentEntries)
+  async getDashboardMetrics(): Promise<DashboardMetrics> {
+    const store = getLocalStore()
+    return computeDashboardMetrics(
+      store.loans,
+      store.installments,
+      store.payments,
+      store.tenPercentEntries
+    )
   }
 
-  async listTenPercentEntries() {
+  async listTenPercentEntries(): Promise<TenPercentEntry[]> {
     const { tenPercentEntries } = getLocalStore()
     return tenPercentEntries
   }
 
-  async addTenPercentEntry(entry: NewTenPercentEntry) {
+  async addTenPercentEntry(entry: NewTenPercentEntry): Promise<TenPercentEntry> {
     const store = getLocalStore()
-    const record: TenPercentEntry = {
-      id: crypto.randomUUID(),
-      ...entry,
+    const newEntry: TenPercentEntry = {
+      id: `ten-${Date.now()}`,
+      entry_date: entry.entry_date,
+      particulars: entry.particulars.trim(),
+      amount: Number(entry.amount),
+      main_sheet_no: entry.main_sheet_no || null,
+      notes: entry.notes?.trim() || null,
       source_kind: 'manual',
       main_transaction_id: null,
       created_at: new Date().toISOString(),
     }
-    const updated = [record, ...store.tenPercentEntries]
+    const updated = [newEntry, ...store.tenPercentEntries]
     saveLocalStore({ tenPercentEntries: updated })
-    return record
+    return newEntry
   }
 
-  async listUntaggedMainTransactions() {
-    const { mainTransactions } = getLocalStore()
-    return mainTransactions.filter((tx) => tx.category === null && tx.credit > 0)
-  }
-
-  async tagMainTransaction(transactionId: string) {
+  async deleteTenPercentEntry(id: string): Promise<void> {
     const store = getLocalStore()
-    const tx = store.mainTransactions.find((m) => m.id === transactionId)
-    if (!tx) throw new Error('MAIN transaction not found.')
-    tx.category = '10PCT'
+    const tenPercentEntries = store.tenPercentEntries.filter((e) => e.id !== id)
+    saveLocalStore({ tenPercentEntries })
+  }
 
+  async listUntaggedMainTransactions(): Promise<MainTransaction[]> {
+    const { mainTransactions } = getLocalStore()
+    return mainTransactions.filter((tx) => !tx.category)
+  }
+
+  async tagMainTransaction(transactionId: string): Promise<TenPercentEntry> {
+    const store = getLocalStore()
+    const tx = store.mainTransactions.find((t) => t.id === transactionId)
+    if (!tx) throw new Error('Transaction not found.')
+    tx.category = '10PCT'
     const entry: TenPercentEntry = {
-      id: crypto.randomUUID(),
+      id: `ten-tag-${tx.id}`,
       entry_date: tx.transaction_date || formatDateISO(new Date()),
       particulars: tx.particulars,
       amount: tx.credit,
       main_sheet_no: tx.main_sheet_no,
-      notes: 'Tagged from MAIN transaction',
+      notes: 'Explicitly tagged from MAIN ledger transaction',
       source_kind: 'main_tag',
       main_transaction_id: tx.id,
       created_at: new Date().toISOString(),
     }
-    const updatedEntries = [entry, ...store.tenPercentEntries]
-    saveLocalStore({ mainTransactions: store.mainTransactions, tenPercentEntries: updatedEntries })
+    const updated = [entry, ...store.tenPercentEntries]
+    saveLocalStore({ mainTransactions: store.mainTransactions, tenPercentEntries: updated })
     return entry
+  }
+
+  async listInvestments(): Promise<InvestmentEntry[]> {
+    const { investments } = getLocalStore()
+    return investments
+  }
+
+  async addInvestment(input: NewInvestmentInput): Promise<InvestmentEntry> {
+    const store = getLocalStore()
+    const entry: InvestmentEntry = {
+      id: `inv-${Date.now()}`,
+      entry_date: input.entry_date,
+      investor_name: input.investor_name.trim(),
+      amount: Number(input.amount),
+      notes: input.notes?.trim() || null,
+      created_at: new Date().toISOString(),
+    }
+    const updated = [entry, ...store.investments]
+    saveLocalStore({ investments: updated })
+    return entry
+  }
+
+  async deleteInvestment(id: string): Promise<void> {
+    const store = getLocalStore()
+    const investments = store.investments.filter((i) => i.id !== id)
+    saveLocalStore({ investments })
+  }
+
+  async listInterests(): Promise<InterestEntry[]> {
+    const { interests } = getLocalStore()
+    return interests
+  }
+
+  async addInterest(input: NewInterestInput): Promise<InterestEntry> {
+    const store = getLocalStore()
+    const entry: InterestEntry = {
+      id: `int-${Date.now()}`,
+      entry_date: input.entry_date,
+      customer_name: input.customer_name.trim(),
+      ac_no: input.ac_no || null,
+      amount: Number(input.amount),
+      notes: input.notes?.trim() || null,
+      created_at: new Date().toISOString(),
+    }
+    const updated = [entry, ...store.interests]
+    saveLocalStore({ interests: updated })
+    return entry
+  }
+
+  async deleteInterest(id: string): Promise<void> {
+    const store = getLocalStore()
+    const interests = store.interests.filter((i) => i.id !== id)
+    saveLocalStore({ interests })
+  }
+
+  async listDues(): Promise<DueReceivableEntry[]> {
+    const { dues } = getLocalStore()
+    return dues
+  }
+
+  async addDue(input: NewDueInput): Promise<DueReceivableEntry> {
+    const store = getLocalStore()
+    const entry: DueReceivableEntry = {
+      id: `due-${Date.now()}`,
+      due_date: input.due_date,
+      borrower_name: input.borrower_name.trim(),
+      amount: Number(input.amount),
+      settled_amount: 0,
+      remaining_amount: Number(input.amount),
+      status: 'unpaid',
+      notes: input.notes?.trim() || null,
+      created_at: new Date().toISOString(),
+    }
+    const updated = [entry, ...store.dues]
+    saveLocalStore({ dues: updated })
+    return entry
+  }
+
+  async settleDue(id: string, settleAmount: number): Promise<DueReceivableEntry> {
+    const store = getLocalStore()
+    const index = store.dues.findIndex((d) => d.id === id)
+    if (index === -1) throw new Error('Due record not found.')
+    const due = { ...store.dues[index] }
+    due.settled_amount += Number(settleAmount)
+    due.remaining_amount = Math.max(0, due.amount - due.settled_amount)
+    due.status = due.remaining_amount <= 0 ? 'settled' : 'partial'
+    const updated = [...store.dues]
+    updated[index] = due
+    saveLocalStore({ dues: updated })
+    return due
+  }
+
+  async deleteDue(id: string): Promise<void> {
+    const store = getLocalStore()
+    const dues = store.dues.filter((d) => d.id !== id)
+    saveLocalStore({ dues })
+  }
+
+  async listLedgerTransactions(): Promise<FinancialLedgerTransaction[]> {
+    const { ledgerTransactions } = getLocalStore()
+    return ledgerTransactions
+  }
+
+  async importFullFinanceData(data: ImportedFinanceData): Promise<void> {
+    const loans: Loan[] = data.loans.map((raw) => {
+      const isDaily = raw.mode === 'D'
+      const principal = raw.principal
+      const interestAmount = isDaily ? Math.round(principal * 0.03) : 0
+      const weeklyPayment = !isDaily ? 3000 : 0
+      const totalExpected = isDaily ? principal + interestAmount * 6 : 30000
+      const isClosed = Boolean(raw.cleared) || raw.sourceCredit >= principal
+      return {
+        id: `loan-${raw.mainSheetNo}-${raw.sourceKey.replace(/[^a-zA-Z0-9-]/g, '-')}`,
+        main_sheet_no: raw.mainSheetNo,
+        customer_name: raw.customerName,
+        mode: raw.mode,
+        loan_date: raw.loanDate,
+        principal,
+        interest_amount: interestAmount,
+        weekly_payment: weeklyPayment,
+        total_expected: totalExpected,
+        total_collected: raw.sourceCredit,
+        remaining_balance: Math.max(0, totalExpected - raw.sourceCredit),
+        status: isClosed ? 'closed' : 'active',
+        closed_at: isClosed ? raw.loanDate : null,
+        source_remarks: raw.sourceRemarks,
+        created_at: new Date(raw.loanDate).toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+    })
+
+    const tenPercentEntries: TenPercentEntry[] = data.tenPercentEntries.map((raw, idx) => ({
+      id: `ten-imp-${idx}`,
+      entry_date: raw.date,
+      particulars: raw.particulars,
+      amount: raw.amount,
+      main_sheet_no: raw.mainSheetNo,
+      notes: 'Imported from verified 10% profit ledger',
+      source_kind: 'imported',
+      main_transaction_id: null,
+      created_at: new Date().toISOString(),
+    }))
+
+    const installments: Installment[] = []
+    loans.forEach((loan) => {
+      const insts = loan.mode === 'D'
+        ? generateDailyInstallments(loan.id, loan.loan_date, undefined, loan.interest_amount)
+        : generateWeeklyInstallments(loan.id, loan.loan_date, undefined, loan.weekly_payment)
+      installments.push(...insts)
+    })
+
+    saveLocalStore({
+      loans,
+      installments,
+      tenPercentEntries,
+      investments: data.investments,
+      interests: data.interests,
+      dues: data.dues,
+    })
   }
 
   async clearAllData(): Promise<void> {
@@ -514,28 +827,64 @@ class LocalPreviewFinanceApi implements FinanceApi {
             window.localStorage.removeItem(k)
           }
         }
-        window.localStorage.setItem(STORAGE_KEY_LOANS, JSON.stringify([]))
-        window.localStorage.setItem(STORAGE_KEY_INSTALLMENTS, JSON.stringify([]))
-        window.localStorage.setItem(STORAGE_KEY_PAYMENTS, JSON.stringify([]))
-        window.localStorage.setItem(STORAGE_KEY_TEN_PERCENT, JSON.stringify([]))
-        window.localStorage.setItem(STORAGE_KEY_MAIN_TX, JSON.stringify([]))
       }
-    } catch (e) {
-      console.error('Failed to clear local storage:', e)
+    } catch {
+      // Ignore
     }
+    memoryStore.clear()
+    setStorageItem(STORAGE_KEY_LOANS, JSON.stringify([]))
+    setStorageItem(STORAGE_KEY_INSTALLMENTS, JSON.stringify([]))
+    setStorageItem(STORAGE_KEY_PAYMENTS, JSON.stringify([]))
+    setStorageItem(STORAGE_KEY_TEN_PERCENT, JSON.stringify([]))
+    setStorageItem(STORAGE_KEY_MAIN_TX, JSON.stringify([]))
+    setStorageItem(STORAGE_KEY_INVESTMENTS, JSON.stringify([]))
+    setStorageItem(STORAGE_KEY_INTERESTS, JSON.stringify([]))
+    setStorageItem(STORAGE_KEY_DUES, JSON.stringify([]))
+    setStorageItem(STORAGE_KEY_CUSTOMERS, JSON.stringify([]))
+    setStorageItem(STORAGE_KEY_LEDGER, JSON.stringify([]))
   }
 }
 
-class SupabaseFinanceApi implements FinanceApi {
-  async listPeople(search = '') {
-    let query = supabase!.from('customers').select('*').order('name').limit(8)
+export class SupabaseFinanceApi implements FinanceApi {
+  async listPeople(search = ''): Promise<Customer[]> {
+    let query = supabase!.from('customers').select('*').order('name').limit(20)
     if (search.trim()) query = query.ilike('name', `%${search.trim()}%`)
     const { data, error } = await query
     if (error) throw error
     return (data || []) as Customer[]
   }
 
-  async listLoans(filter?: { mode?: ModeKind; status?: 'active' | 'closed'; search?: string }) {
+  async createCustomer(input: { name: string; phone?: string; address?: string }): Promise<Customer> {
+    const { data, error } = await supabase!
+      .from('customers')
+      .insert({
+        name: input.name.trim(),
+        phone: input.phone?.trim() || null,
+        address: input.address?.trim() || null,
+      })
+      .select('*')
+      .single()
+    if (error) throw error
+    return data as Customer
+  }
+
+  async getCustomerDetail(id: string): Promise<{ customer: Customer; loans: Loan[]; dues: DueReceivableEntry[] } | null> {
+    const { data: customer, error: custErr } = await supabase!.from('customers').select('*').eq('id', id).single()
+    if (custErr || !customer) return null
+
+    const [{ data: loans }, { data: dues }] = await Promise.all([
+      supabase!.from('loans').select('*').eq('customer_id', id).order('loan_date', { ascending: false }),
+      supabase!.from('due_receivables').select('*').eq('borrower_name', customer.name).order('due_date', { ascending: false }),
+    ])
+
+    return {
+      customer: customer as Customer,
+      loans: (loans || []) as Loan[],
+      dues: (dues || []) as DueReceivableEntry[],
+    }
+  }
+
+  async listLoans(filter?: { mode?: ModeKind; status?: 'active' | 'closed'; search?: string }): Promise<Loan[]> {
     let query = supabase!.from('loans').select('*').order('loan_date', { ascending: false })
     if (filter?.mode) query = query.eq('mode', filter.mode)
     if (filter?.status) query = query.eq('status', filter.status)
@@ -545,7 +894,7 @@ class SupabaseFinanceApi implements FinanceApi {
     return (data || []) as Loan[]
   }
 
-  async getLoanDetail(id: string) {
+  async getLoanDetail(id: string): Promise<{ loan: Loan; installments: Installment[]; payments: Payment[] } | null> {
     const { data: loan, error: loanErr } = await supabase!.from('loans').select('*').eq('id', id).single()
     if (loanErr || !loan) return null
 
@@ -559,7 +908,7 @@ class SupabaseFinanceApi implements FinanceApi {
         .from('payments')
         .select('*')
         .eq('loan_id', id)
-        .order('payment_date', { ascending: false })
+        .order('payment_date', { ascending: false }),
     ])
 
     return {
@@ -569,7 +918,7 @@ class SupabaseFinanceApi implements FinanceApi {
     }
   }
 
-  async createLoan(input: NewLoanInput) {
+  async createLoan(input: NewLoanInput): Promise<Loan> {
     const isDaily = input.mode === 'D'
     const principal = Number(input.principal)
     const interestAmount = isDaily ? Number(input.interest_amount) : 0
@@ -593,7 +942,7 @@ class SupabaseFinanceApi implements FinanceApi {
     return loan as Loan
   }
 
-  async recordPayment(input: NewPaymentInput) {
+  async recordPayment(input: NewPaymentInput): Promise<{ loan: Loan; payment: Payment; installments: Installment[] }> {
     const { data, error } = await supabase!.rpc('record_loan_payment', {
       p_loan_id: input.loan_id,
       p_installment_id: input.installment_id || null,
@@ -616,18 +965,18 @@ class SupabaseFinanceApi implements FinanceApi {
     return { ...result, installments: (installments || []) as Installment[] }
   }
 
-  async closeLoan(id: string) {
+  async closeLoan(id: string): Promise<Loan> {
     const { data, error } = await supabase!.from('loans').update({ status: 'closed', closed_at: new Date().toISOString() }).eq('id', id).select().single()
     if (error) throw error
     return data as Loan
   }
 
-  async deleteLoan(id: string) {
+  async deleteLoan(id: string): Promise<void> {
     const { error } = await supabase!.from('loans').delete().eq('id', id)
     if (error) throw new Error(`Unable to delete account: ${error.message}`)
   }
 
-  async listPayments(filter?: { mode?: ModeKind; search?: string }) {
+  async listPayments(filter?: { mode?: ModeKind; search?: string }): Promise<Payment[]> {
     let query = supabase!.from('payments').select('*').order('payment_date', { ascending: false })
     if (filter?.mode) query = query.eq('mode', filter.mode)
     if (filter?.search) query = query.ilike('customer_name', `%${filter.search}%`)
@@ -636,7 +985,7 @@ class SupabaseFinanceApi implements FinanceApi {
     return (data || []) as Payment[]
   }
 
-  async listInstallments(filter?: { status?: InstallmentStatus; due_date?: string }) {
+  async listInstallments(filter?: { status?: InstallmentStatus; due_date?: string }): Promise<Array<Installment & { loan?: Loan }>> {
     let query = supabase!.from('installments').select('*, loan:loans(*)')
     if (filter?.status) query = query.eq('status', filter.status)
     if (filter?.due_date) query = query.eq('due_date', filter.due_date)
@@ -645,7 +994,7 @@ class SupabaseFinanceApi implements FinanceApi {
     return (data || []) as Array<Installment & { loan?: Loan }>
   }
 
-  async getDashboardMetrics() {
+  async getDashboardMetrics(): Promise<DashboardMetrics> {
     const [loansRes, instsRes, paysRes, tpRes] = await Promise.all([
       supabase!.from('loans').select('*'),
       supabase!.from('installments').select('*'),
@@ -666,7 +1015,7 @@ class SupabaseFinanceApi implements FinanceApi {
     )
   }
 
-  async listTenPercentEntries() {
+  async listTenPercentEntries(): Promise<TenPercentEntry[]> {
     const { data, error } = await supabase!
       .from('ten_percent_entries')
       .select('*')
@@ -675,7 +1024,7 @@ class SupabaseFinanceApi implements FinanceApi {
     return (data || []) as TenPercentEntry[]
   }
 
-  async addTenPercentEntry(entry: NewTenPercentEntry) {
+  async addTenPercentEntry(entry: NewTenPercentEntry): Promise<TenPercentEntry> {
     const { data, error } = await supabase!
       .from('ten_percent_entries')
       .insert({ ...entry, source_kind: 'manual' })
@@ -685,7 +1034,12 @@ class SupabaseFinanceApi implements FinanceApi {
     return data as TenPercentEntry
   }
 
-  async listUntaggedMainTransactions() {
+  async deleteTenPercentEntry(id: string): Promise<void> {
+    const { error } = await supabase!.from('ten_percent_entries').delete().eq('id', id)
+    if (error) throw error
+  }
+
+  async listUntaggedMainTransactions(): Promise<MainTransaction[]> {
     const { data, error } = await supabase!
       .from('main_transactions')
       .select('*')
@@ -695,16 +1049,176 @@ class SupabaseFinanceApi implements FinanceApi {
     return (data || []) as MainTransaction[]
   }
 
-  async tagMainTransaction(transactionId: string) {
+  async tagMainTransaction(transactionId: string): Promise<TenPercentEntry> {
     const { data, error } = await supabase!
       .rpc('tag_main_transaction_as_ten_percent', { p_transaction_id: transactionId })
     if (error) throw error
     return data as TenPercentEntry
   }
 
+  async listInvestments(): Promise<InvestmentEntry[]> {
+    const { data, error } = await supabase!
+      .from('investment_entries')
+      .select('*')
+      .order('entry_date', { ascending: false })
+    if (error) throw error
+    return (data || []) as InvestmentEntry[]
+  }
+
+  async addInvestment(input: NewInvestmentInput): Promise<InvestmentEntry> {
+    const { data, error } = await supabase!
+      .from('investment_entries')
+      .insert({
+        entry_date: input.entry_date,
+        investor_name: input.investor_name.trim(),
+        amount: Number(input.amount),
+        notes: input.notes?.trim() || null,
+      })
+      .select('*')
+      .single()
+    if (error) throw error
+    return data as InvestmentEntry
+  }
+
+  async deleteInvestment(id: string): Promise<void> {
+    const { error } = await supabase!.from('investment_entries').delete().eq('id', id)
+    if (error) throw error
+  }
+
+  async listInterests(): Promise<InterestEntry[]> {
+    const { data, error } = await supabase!
+      .from('interest_entries')
+      .select('*')
+      .order('entry_date', { ascending: false })
+    if (error) throw error
+    return (data || []) as InterestEntry[]
+  }
+
+  async addInterest(input: NewInterestInput): Promise<InterestEntry> {
+    const { data, error } = await supabase!
+      .from('interest_entries')
+      .insert({
+        entry_date: input.entry_date,
+        customer_name: input.customer_name.trim(),
+        ac_no: input.ac_no || null,
+        amount: Number(input.amount),
+        notes: input.notes?.trim() || null,
+      })
+      .select('*')
+      .single()
+    if (error) throw error
+    return data as InterestEntry
+  }
+
+  async deleteInterest(id: string): Promise<void> {
+    const { error } = await supabase!.from('interest_entries').delete().eq('id', id)
+    if (error) throw error
+  }
+
+  async listDues(): Promise<DueReceivableEntry[]> {
+    const { data, error } = await supabase!
+      .from('due_receivables')
+      .select('*')
+      .order('due_date', { ascending: false })
+    if (error) throw error
+    return (data || []) as DueReceivableEntry[]
+  }
+
+  async addDue(input: NewDueInput): Promise<DueReceivableEntry> {
+    const amount = Number(input.amount)
+    const { data, error } = await supabase!
+      .from('due_receivables')
+      .insert({
+        due_date: input.due_date,
+        borrower_name: input.borrower_name.trim(),
+        amount,
+        settled_amount: 0,
+        remaining_amount: amount,
+        status: 'unpaid',
+        notes: input.notes?.trim() || null,
+      })
+      .select('*')
+      .single()
+    if (error) throw error
+    return data as DueReceivableEntry
+  }
+
+  async settleDue(id: string, settleAmount: number): Promise<DueReceivableEntry> {
+    const { data: existing, error: fetchErr } = await supabase!
+      .from('due_receivables')
+      .select('*')
+      .eq('id', id)
+      .single()
+    if (fetchErr || !existing) throw new Error('Due record not found')
+
+    const newSettled = Number(existing.settled_amount || 0) + Number(settleAmount)
+    const newRemaining = Math.max(0, Number(existing.amount) - newSettled)
+    const newStatus = newRemaining <= 0 ? 'settled' : 'partial'
+
+    const { data, error } = await supabase!
+      .from('due_receivables')
+      .update({
+        settled_amount: newSettled,
+        remaining_amount: newRemaining,
+        status: newStatus,
+      })
+      .eq('id', id)
+      .select('*')
+      .single()
+    if (error) throw error
+    return data as DueReceivableEntry
+  }
+
+  async deleteDue(id: string): Promise<void> {
+    const { error } = await supabase!.from('due_receivables').delete().eq('id', id)
+    if (error) throw error
+  }
+
+  async listLedgerTransactions(): Promise<FinancialLedgerTransaction[]> {
+    const { data, error } = await supabase!
+      .from('ledger_transactions')
+      .select('*')
+      .order('transaction_date', { ascending: false })
+    if (error) throw error
+    return (data || []) as FinancialLedgerTransaction[]
+  }
+
+  async importFullFinanceData(data: ImportedFinanceData): Promise<void> {
+    if (data.investments.length > 0) {
+      await supabase!.from('investment_entries').upsert(data.investments)
+    }
+    if (data.interests.length > 0) {
+      await supabase!.from('interest_entries').upsert(data.interests)
+    }
+    if (data.dues.length > 0) {
+      await supabase!.from('due_receivables').upsert(data.dues)
+    }
+    if (data.tenPercentEntries.length > 0) {
+      const formatted = data.tenPercentEntries.map((t) => ({
+        entry_date: t.date,
+        particulars: t.particulars,
+        amount: t.amount,
+        main_sheet_no: t.mainSheetNo,
+        source_kind: 'imported',
+      }))
+      await supabase!.from('ten_percent_entries').insert(formatted)
+    }
+  }
+
   async clearAllData(): Promise<void> {
     if (!supabase) return
-    for (const table of ['payments', 'installments', 'loans', 'customers', 'ten_percent_entries', 'main_transactions'] as const) {
+    for (const table of [
+      'payments',
+      'installments',
+      'loans',
+      'customers',
+      'ten_percent_entries',
+      'main_transactions',
+      'investment_entries',
+      'interest_entries',
+      'due_receivables',
+      'ledger_transactions',
+    ] as const) {
       await supabase.from(table).delete().not('id', 'is', null)
     }
   }
