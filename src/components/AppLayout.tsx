@@ -114,6 +114,14 @@ export function AppLayout({ onSignOut, onOpenNewLoan }: Props) {
           >
             <span>💰</span> 10% Profit
           </NavLink>
+
+          <NavLink
+            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+            to="/reconciliation"
+            onClick={closeMenu}
+          >
+            <span>⚖️</span> Reconciliation
+          </NavLink>
         </nav>
 
         <div className="sidebar-action">
