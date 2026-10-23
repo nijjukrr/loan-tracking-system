@@ -54,6 +54,7 @@ export interface FinanceApi {
   deleteTenPercentEntry(id: string): Promise<void>
   listUntaggedMainTransactions(): Promise<MainTransaction[]>
   tagMainTransaction(transactionId: string): Promise<TenPercentEntry>
+  untagMainTransaction(transactionId: string): Promise<void>
 
   // Investment Management
   listInvestments(): Promise<InvestmentEntry[]>
@@ -671,8 +672,13 @@ export class LocalPreviewFinanceApi implements FinanceApi {
 
   async deleteTenPercentEntry(id: string): Promise<void> {
     const store = getLocalStore()
+    const target = store.tenPercentEntries.find((e) => e.id === id)
+    if (target?.main_transaction_id) {
+      const tx = store.mainTransactions.find((t) => t.id === target.main_transaction_id)
+      if (tx) tx.category = null
+    }
     const tenPercentEntries = store.tenPercentEntries.filter((e) => e.id !== id)
-    saveLocalStore({ tenPercentEntries })
+    saveLocalStore({ mainTransactions: store.mainTransactions, tenPercentEntries })
   }
 
   async listUntaggedMainTransactions(): Promise<MainTransaction[]> {
@@ -684,6 +690,7 @@ export class LocalPreviewFinanceApi implements FinanceApi {
     const store = getLocalStore()
     const tx = store.mainTransactions.find((t) => t.id === transactionId)
     if (!tx) throw new Error('Transaction not found.')
+    if (tx.category === '10PCT') throw new Error('Transaction is already tagged as 10% profit.')
     tx.category = '10PCT'
     const entry: TenPercentEntry = {
       id: `ten-tag-${tx.id}`,
@@ -696,9 +703,21 @@ export class LocalPreviewFinanceApi implements FinanceApi {
       main_transaction_id: tx.id,
       created_at: new Date().toISOString(),
     }
-    const updated = [entry, ...store.tenPercentEntries]
+    const updated = [entry, ...store.tenPercentEntries.filter((e) => e.main_transaction_id !== tx.id)]
     saveLocalStore({ mainTransactions: store.mainTransactions, tenPercentEntries: updated })
     return entry
+  }
+
+  async untagMainTransaction(transactionId: string): Promise<void> {
+    const store = getLocalStore()
+    const tx = store.mainTransactions.find((t) => t.id === transactionId)
+    if (tx) {
+      tx.category = null
+    }
+    const updated = store.tenPercentEntries.filter(
+      (e) => e.main_transaction_id !== transactionId && e.id !== `ten-tag-${transactionId}`
+    )
+    saveLocalStore({ mainTransactions: store.mainTransactions, tenPercentEntries: updated })
   }
 
   async listInvestments(): Promise<InvestmentEntry[]> {
@@ -1077,6 +1096,10 @@ export class SupabaseFinanceApi implements FinanceApi {
   }
 
   async deleteTenPercentEntry(id: string): Promise<void> {
+    const { data } = await supabase!.from('ten_percent_entries').select('main_transaction_id').eq('id', id).maybeSingle()
+    if (data?.main_transaction_id) {
+      await supabase!.from('main_transactions').update({ category: null }).eq('id', data.main_transaction_id)
+    }
     const { error } = await supabase!.from('ten_percent_entries').delete().eq('id', id)
     if (error) throw error
   }
@@ -1096,6 +1119,19 @@ export class SupabaseFinanceApi implements FinanceApi {
       .rpc('tag_main_transaction_as_ten_percent', { p_transaction_id: transactionId })
     if (error) throw error
     return data as TenPercentEntry
+  }
+
+  async untagMainTransaction(transactionId: string): Promise<void> {
+    const { error: deleteError } = await supabase!
+      .from('ten_percent_entries')
+      .delete()
+      .eq('main_transaction_id', transactionId)
+    if (deleteError) throw deleteError
+    const { error: updateError } = await supabase!
+      .from('main_transactions')
+      .update({ category: null })
+      .eq('id', transactionId)
+    if (updateError) throw updateError
   }
 
   async listInvestments(): Promise<InvestmentEntry[]> {
